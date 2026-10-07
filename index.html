@@ -1,973 +1,300 @@
-// ============================================================
-// අඹ සිසිල Management System
-// Supabase Authentication + Login
-// ============================================================
-
-
-// ============================================================
-// SUPABASE CONFIG
-// ============================================================
-
-const SUPABASE_URL =
-    "https://wazmcrsdzehterjkyeqt.supabase.co";
-
-// IMPORTANT:
-// මෙතන Vercel එකේ තියෙන SAME Supabase Publishable Key එක දාන්න.
-// Service Role / Secret Key එක දාන්න එපා.
-const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
-
-
-const supabaseClient =
-    window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-    );
-
-
-// ============================================================
-// LANGUAGE
-// ============================================================
-
-const dict = {
+<!doctype html>
+<html lang="si">
 
-    si: {
-        dashboard: "උපකරණ පුවරුව",
-        pos: "POS / විකුණුම්",
-        products: "නිෂ්පාදන",
-        stock: "තොග",
-        expenses: "වියදම්",
-        reports: "වාර්තා",
-        employees: "සේවකයින්",
-        settings: "සැකසුම්",
+<head>
 
-        sales: "අද විකුණුම්",
-        orders: "ඇණවුම්",
-        profit: "ලාභය",
-        low: "අඩු තොග",
-        recent: "මෑත විකුණුම්",
+  <meta charset="utf-8">
 
-        add: "එක් කරන්න",
-        name: "නම",
-        price: "විකුණුම් මිල",
-        cost: "පිරිවැය",
-        qty: "ප්‍රමාණය",
-
-        payment: "ගෙවීම් ක්‍රමය",
-        cash: "මුදල්",
-        card: "කාඩ්",
-        save: "සුරකින්න"
-    },
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
 
-    en: {
-        dashboard: "Dashboard",
-        pos: "POS / Sales",
-        products: "Products",
-        stock: "Stock",
-        expenses: "Expenses",
-        reports: "Reports",
-        employees: "Employees",
-        settings: "Settings",
-
-        sales: "Today's Sales",
-        orders: "Orders",
-        profit: "Profit",
-        low: "Low Stock",
-        recent: "Recent Sales",
+  <title>අඹ සිසිල Management</title>
 
-        add: "Add",
-        name: "Name",
-        price: "Selling Price",
-        cost: "Cost",
-        qty: "Quantity",
-
-        payment: "Payment Method",
-        cash: "Cash",
-        card: "Card",
-        save: "Save"
-    }
-};
-
-
-let lang =
-    localStorage.getItem("amba_lang") || "si";
-
-let page = "dashboard";
-
-let currentUser = null;
-let currentProfile = null;
-
+  <link
+    rel="stylesheet"
+    href="style.css"
+  >
 
-// ============================================================
-// HELPERS
-// ============================================================
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-const t = key =>
-    dict[lang]?.[key] || key;
+</head>
 
 
-const money = number =>
-    "Rs. " +
-    Number(number || 0).toLocaleString(
-        "en-LK",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }
-    );
+<body>
 
 
-// ============================================================
-// LOGIN
-// ============================================================
+  <!-- ======================================================
+       LOGIN SCREEN
+       ====================================================== -->
 
-async function login(username, password) {
+  <div
+    id="loginScreen"
+    class="login-screen"
+  >
 
-    username =
-        String(username || "").trim();
+    <div class="login-box">
 
-    password =
-        String(password || "");
 
+      <div class="brand login-brand">
 
-    if (!username || !password) {
+        🥭
 
-        throw new Error(
-            lang === "si"
-                ? "Username සහ Password දෙකම ඇතුළත් කරන්න."
-                : "Please enter username and password."
-        );
-    }
+        <h1>අඹ සිසිල</h1>
 
+        <small>
+          Management System
+        </small>
 
-    // --------------------------------------------------------
-    // Username → Email
-    // --------------------------------------------------------
+      </div>
 
-    const {
-        data: email,
-        error: emailError
-    } =
-        await supabaseClient.rpc(
-            "get_login_email",
-            {
-                p_username: username
-            }
-        );
 
+      <div class="field">
 
-    if (emailError) {
+        <label>
+          Username
+        </label>
 
-        console.error(
-            "Username lookup error:",
-            emailError
-        );
+        <input
+          id="loginUsername"
+          type="text"
+          autocomplete="username"
+          placeholder="Username"
+        >
 
-        throw new Error(
-            lang === "si"
-                ? "Login system එකට සම්බන්ධ වීමට නොහැක."
-                : "Unable to connect to login system."
-        );
-    }
+      </div>
 
 
-    if (!email) {
+      <div class="field">
 
-        throw new Error(
-            lang === "si"
-                ? "Username එක හමු නොවීය."
-                : "Username not found."
-        );
-    }
+        <label>
+          Password
+        </label>
 
+        <input
+          id="loginPassword"
+          type="password"
+          autocomplete="current-password"
+          placeholder="Password"
+        >
 
-    // --------------------------------------------------------
-    // Supabase Authentication
-    // --------------------------------------------------------
+      </div>
 
-    const {
-        data,
-        error
-    } =
-        await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
 
+      <button
+        class="btn login-btn"
+        onclick="loginUser()"
+      >
+        LOGIN
+      </button>
 
-    if (error) {
 
-        console.error(
-            "Supabase login error:",
-            error
-        );
+      <button
+        class="forgot-btn"
+        onclick="forgotPassword()"
+      >
+        Forgot Password?
+      </button>
 
-        throw new Error(
-            lang === "si"
-                ? "Username හෝ Password වැරදියි."
-                : "Incorrect username or password."
-        );
-    }
 
+      <div
+        id="loginMessage"
+        class="login-message"
+      ></div>
 
-    currentUser =
-        data.user;
 
+    </div>
 
-    await loadProfile();
+  </div>
 
 
-    showApp();
 
+  <!-- ======================================================
+       MAIN APPLICATION
+       ====================================================== -->
 
-    return true;
-}
+  <div
+    id="mainApp"
+    class="app-hidden"
+  >
 
 
-// ============================================================
-// LOGIN BUTTON
-// ============================================================
+    <!-- ====================================================
+         SIDEBAR
+         ==================================================== -->
 
-async function loginUser() {
+    <aside>
 
-    const usernameInput =
-        document.getElementById(
-            "loginUsername"
-        );
 
-    const passwordInput =
-        document.getElementById(
-            "loginPassword"
-        );
+      <div class="brand">
 
-    const message =
-        document.getElementById(
-            "loginMessage"
-        );
+        🥭
 
-    const button =
-        document.querySelector(
-            ".login-btn"
-        );
+        <b>
+          අඹ සිසිල
+        </b>
 
+        <small>
+          Management System
+        </small>
 
-    const username =
-        usernameInput?.value.trim() || "";
+      </div>
 
-    const password =
-        passwordInput?.value || "";
 
+      <nav>
 
-    if (message) {
 
-        message.textContent = "";
+        <button
+          onclick="show('dashboard')"
+        >
+          📊 Dashboard
+        </button>
 
-        message.style.display =
-            "none";
-    }
 
+        <button
+          onclick="show('pos')"
+        >
+          🧾 POS / Sales
+        </button>
 
-    if (!username || !password) {
 
-        if (message) {
+        <button
+          onclick="show('products')"
+        >
+          🍲 Products
+        </button>
 
-            message.textContent =
-                lang === "si"
-                    ? "Username සහ Password දෙකම ඇතුළත් කරන්න."
-                    : "Please enter username and password.";
 
-            message.style.display =
-                "block";
-        }
+        <button
+          onclick="show('stock')"
+        >
+          📦 Stock
+        </button>
 
-        return;
-    }
 
+        <button
+          onclick="show('expenses')"
+        >
+          💰 Expenses
+        </button>
 
-    if (button) {
 
-        button.disabled = true;
+        <button
+          onclick="show('reports')"
+        >
+          📈 Reports
+        </button>
 
-        button.textContent =
-            "LOGIN...";
-    }
 
+        <button
+          id="employeesMenu"
+          onclick="show('employees')"
+        >
+          👥 Employees
+        </button>
 
-    try {
 
-        await login(
-            username,
-            password
-        );
+        <button
+          onclick="show('settings')"
+        >
+          ⚙️ Settings
+        </button>
 
-    } catch (error) {
 
-        console.error(
-            "LOGIN ERROR:",
-            error
-        );
+        <button
+          onclick="logoutUser()"
+        >
+          🚪 Logout
+        </button>
 
 
-        if (message) {
+      </nav>
 
-            message.textContent =
-                error.message ||
-                "Login failed.";
+    </aside>
 
-            message.style.display =
-                "block";
-        }
 
-    } finally {
 
-        if (button) {
+    <!-- ====================================================
+         MAIN CONTENT
+         ==================================================== -->
 
-            button.disabled = false;
+    <main>
 
-            button.textContent =
-                "LOGIN";
-        }
-    }
-}
 
+      <header>
 
-// ============================================================
-// FORGOT PASSWORD
-// ============================================================
 
-async function forgotPassword() {
+        <button
+          class="hamb"
+          onclick="document.querySelector('aside').classList.toggle('open')"
+        >
+          ☰
+        </button>
 
-    const usernameInput =
-        document.getElementById(
-            "loginUsername"
-        );
 
-    const message =
-        document.getElementById(
-            "loginMessage"
-        );
+        <div>
 
+          <h1 id="title">
+            Dashboard
+          </h1>
 
-    const username =
-        usernameInput?.value.trim() || "";
+          <small id="date"></small>
 
+        </div>
 
-    if (!username) {
 
-        if (message) {
+        <div class="user-area">
 
-            message.textContent =
-                lang === "si"
-                    ? "මුලින් Username එක ඇතුළත් කරන්න."
-                    : "Enter your username first.";
 
-            message.style.display =
-                "block";
-        }
+          <span id="currentUser"></span>
 
-        return;
-    }
 
+          <select
+            id="lang"
+            onchange="setLang(this.value)"
+          >
 
-    try {
+            <option value="si">
+              සිංහල
+            </option>
 
-        const {
-            data: email,
-            error
-        } =
-            await supabaseClient.rpc(
-                "get_login_email",
-                {
-                    p_username: username
-                }
-            );
+            <option value="en">
+              English
+            </option>
 
+          </select>
 
-        if (error || !email) {
 
-            throw new Error(
-                lang === "si"
-                    ? "Username එක හමු නොවීය."
-                    : "Username not found."
-            );
-        }
+        </div>
 
 
-        const {
-            error: resetError
-        } =
-            await supabaseClient.auth
-                .resetPasswordForEmail(
-                    email,
-                    {
-                        redirectTo:
-                            window.location.origin
-                    }
-                );
+      </header>
 
 
-        if (resetError) {
 
-            throw resetError;
-        }
+      <!-- ==================================================
+           APP CONTENT
+           ================================================== -->
 
+      <section id="app"></section>
 
-        if (message) {
 
-            message.textContent =
-                lang === "si"
-                    ? "Password reset email එක යවා ඇත."
-                    : "Password reset email has been sent.";
+    </main>
 
-            message.style.display =
-                "block";
-        }
 
-    } catch (error) {
+  </div>
 
-        console.error(
-            "PASSWORD RESET ERROR:",
-            error
-        );
 
 
-        if (message) {
+  <!-- ======================================================
+       APPLICATION JAVASCRIPT
+       ====================================================== -->
 
-            message.textContent =
-                error.message ||
-                "Password reset failed.";
+  <script src="app.js"></script>
 
-            message.style.display =
-                "block";
-        }
-    }
-}
 
+</body>
 
-// ============================================================
-// LOAD PROFILE
-// ============================================================
-
-async function loadProfile() {
-
-    if (!currentUser) {
-        return null;
-    }
-
-
-    const {
-        data,
-        error
-    } =
-        await supabaseClient
-            .from("profiles")
-            .select(
-                "id, username, full_name, role, language"
-            )
-            .eq(
-                "id",
-                currentUser.id
-            )
-            .single();
-
-
-    if (error) {
-
-        console.error(
-            "Profile error:",
-            error
-        );
-
-        throw new Error(
-            lang === "si"
-                ? "User profile එක ලබාගත නොහැක."
-                : "Unable to load user profile."
-        );
-    }
-
-
-    currentProfile =
-        data;
-
-
-    if (data.language) {
-
-        lang =
-            data.language;
-
-        localStorage.setItem(
-            "amba_lang",
-            lang
-        );
-    }
-
-
-    updateCurrentUserDisplay();
-
-
-    return data;
-}
-
-
-// ============================================================
-// CURRENT USER DISPLAY
-// ============================================================
-
-function updateCurrentUserDisplay() {
-
-    const element =
-        document.getElementById(
-            "currentUser"
-        );
-
-
-    if (!element) {
-        return;
-    }
-
-
-    if (currentProfile) {
-
-        element.textContent =
-            currentProfile.full_name ||
-            currentProfile.username ||
-            "";
-    }
-}
-
-
-// ============================================================
-// SESSION CHECK
-// ============================================================
-
-async function checkSession() {
-
-    try {
-
-        const {
-            data,
-            error
-        } =
-            await supabaseClient.auth
-                .getSession();
-
-
-        if (error) {
-
-            console.error(
-                "Session error:",
-                error
-            );
-
-            showLogin();
-
-            return;
-        }
-
-
-        if (data.session) {
-
-            currentUser =
-                data.session.user;
-
-
-            await loadProfile();
-
-
-            showApp();
-
-        } else {
-
-            showLogin();
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Session check error:",
-            error
-        );
-
-        showLogin();
-    }
-}
-
-
-// ============================================================
-// SHOW LOGIN
-// ============================================================
-
-function showLogin() {
-
-    const loginScreen =
-        document.getElementById(
-            "loginScreen"
-        );
-
-    const mainApp =
-        document.getElementById(
-            "mainApp"
-        );
-
-
-    if (loginScreen) {
-
-        loginScreen.style.display =
-            "flex";
-    }
-
-
-    if (mainApp) {
-
-        mainApp.classList.add(
-            "app-hidden"
-        );
-
-        mainApp.style.display =
-            "none";
-    }
-}
-
-
-// ============================================================
-// SHOW APP
-// ============================================================
-
-function showApp() {
-
-    const loginScreen =
-        document.getElementById(
-            "loginScreen"
-        );
-
-    const mainApp =
-        document.getElementById(
-            "mainApp"
-        );
-
-
-    if (loginScreen) {
-
-        loginScreen.style.display =
-            "none";
-    }
-
-
-    if (mainApp) {
-
-        mainApp.classList.remove(
-            "app-hidden"
-        );
-
-        mainApp.style.display =
-            "block";
-    }
-
-
-    applyRolePermissions();
-
-    updateCurrentUserDisplay();
-
-    render();
-}
-
-
-// ============================================================
-// LOGOUT
-// ============================================================
-
-async function logout() {
-
-    try {
-
-        const {
-            error
-        } =
-            await supabaseClient.auth
-                .signOut();
-
-
-        if (error) {
-
-            console.error(
-                "Logout error:",
-                error
-            );
-
-            return;
-        }
-
-
-        currentUser = null;
-
-        currentProfile = null;
-
-
-        showLogin();
-
-    } catch (error) {
-
-        console.error(
-            error
-        );
-    }
-}
-
-
-// ============================================================
-// LOGOUT BUTTON
-// ============================================================
-
-async function logoutUser() {
-
-    await logout();
-}
-
-
-// ============================================================
-// ROLE PERMISSIONS
-// ============================================================
-
-function applyRolePermissions() {
-
-    if (!currentProfile) {
-        return;
-    }
-
-
-    const role =
-        currentProfile.role;
-
-
-    const ownerOnlyMenus = [
-        "employees",
-        "expenses",
-        "reports",
-        "settings"
-    ];
-
-
-    ownerOnlyMenus.forEach(
-        pageName => {
-
-            const buttons =
-                document.querySelectorAll(
-                    `[onclick="show('${pageName}')"]`
-                );
-
-
-            buttons.forEach(
-                button => {
-
-                    if (role === "employee") {
-
-                        button.style.display =
-                            "none";
-
-                    } else {
-
-                        button.style.display =
-                            "";
-                    }
-                }
-            );
-        }
-    );
-}
-
-
-// ============================================================
-// NAVIGATION
-// ============================================================
-
-function show(pageName) {
-
-    page =
-        pageName;
-
-
-    render();
-
-
-    const aside =
-        document.querySelector(
-            "aside"
-        );
-
-
-    if (aside) {
-
-        aside.classList.remove(
-            "open"
-        );
-    }
-}
-
-
-// ============================================================
-// LANGUAGE
-// ============================================================
-
-function setLang(value) {
-
-    lang =
-        value;
-
-
-    localStorage.setItem(
-        "amba_lang",
-        lang
-    );
-
-
-    render();
-}
-
-
-// ============================================================
-// RENDER
-// ============================================================
-
-function render() {
-
-    const title =
-        document.getElementById(
-            "title"
-        );
-
-    const date =
-        document.getElementById(
-            "date"
-        );
-
-    const language =
-        document.getElementById(
-            "lang"
-        );
-
-
-    if (title) {
-
-        title.textContent =
-            t(page);
-    }
-
-
-    if (date) {
-
-        date.textContent =
-            new Date().toLocaleDateString(
-                lang === "si"
-                    ? "si-LK"
-                    : "en-GB",
-                {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric"
-                }
-            );
-    }
-
-
-    if (language) {
-
-        language.value =
-            lang;
-    }
-
-
-    const pages = {
-
-        dashboard:
-            dashboard,
-
-        pos:
-            pos,
-
-        products:
-            productsView,
-
-        stock:
-            stock,
-
-        expenses:
-            expensesView,
-
-        reports:
-            reports,
-
-        employees:
-            employees,
-
-        settings:
-            settings
-    };
-
-
-    if (pages[page]) {
-
-        pages[page]();
-    }
-}
-
-
-// ============================================================
-// DASHBOARD
-// ============================================================
-
-function dashboard() {
-
-    const app =
-        document.getElementById(
-            "app"
-        );
-
-
-    if (!app) {
-        return;
-    }
-
-
-    const role =
-        currentProfile?.role ||
-        "employee";
-
-
-    app.innerHTML = `
-
-        <div class="cards">
-
-            <div class="card">
-
-                <small>
-                    ${t("sales")}
-                </small>
-
-                <div class="num">
-                    Rs. 0.00
-                </div>
-
-            </div>
-
-
-            <div class="card">
-
-                <small>
-                    ${t("orders")}
-                </small>
-
-                <div class="num">
-                    0
-                </div>
-
-            </div>
-
-
-            ${
-                role === "owner"
-                ? `
-
-                    <div class="card">
-
-                        <small>
-                            ${t("
+</html>
