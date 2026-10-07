@@ -1,8 +1,6 @@
 // ============================================================
 // අඹ සිසිල Management System
-// Supabase Authentication + Role Based UI
-// Dashboard + Employee POS Only
-// FULL POS VERSION
+// Supabase Authentication + Role Based Access + POS
 // ============================================================
 
 
@@ -13,136 +11,98 @@
 const SUPABASE_URL =
   "https://wazmcrsdzehterjkyeqt.supabase.co";
 
+// IMPORTANT:
+// මෙතන දැනට ඔයාගේ app.js එකේ තියෙන SAME
+// Supabase Publishable Key එක දාන්න.
+//
+// Service Role / Secret Key එක දාන්න එපා.
+
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
 
 
-// ============================================================
-// SUPABASE CLIENT
-// ============================================================
-
-let supabaseClient = null;
-
-if (
-  window.supabase &&
-  window.supabase.createClient
-) {
-
-  supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
-
-} else {
-
-  console.error(
-    "Supabase library not loaded."
-  );
-
-}
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 
 // ============================================================
-// GLOBAL VARIABLES
+// GLOBAL STATE
 // ============================================================
 
 let currentUser = null;
 let currentProfile = null;
+
 let currentPage = "dashboard";
 
 let language =
-  localStorage.getItem("amba_lang") || "si";
-
-
-// ============================================================
-// POS GLOBAL VARIABLES
-// ============================================================
-
-let posProducts = [];
-
-let posCart = [];
-
-let selectedPaymentMethod = "cash";
+  localStorage.getItem("amba_language") || "si";
 
 
 // ============================================================
 // TRANSLATIONS
 // ============================================================
 
-const translations = {
+const dict = {
 
   si: {
 
-    dashboard: "උපකරණ පුවරුව",
-    pos: "POS / විකුණුම්",
-    products: "නිෂ්පාදන",
-    stock: "තොග",
-    expenses: "වියදම්",
-    reports: "වාර්තා",
-    employees: "සේවකයින්",
-    settings: "සැකසුම්",
-
-    sales: "අද විකුණුම්",
-    orders: "අද ඇණවුම්",
-    profit: "ලාභය",
-    low: "අඩු තොග",
-    recent: "මෑත විකුණුම්",
-
-    cash: "මුදල්",
-    card: "කාඩ්",
-
-    name: "නම",
-    price: "විකුණුම් මිල",
-    cost: "පිරිවැය",
-    qty: "ප්‍රමාණය",
-
-    save: "සුරකින්න",
-    add: "එක් කරන්න",
-
-    welcome: "සාදරයෙන් පිළිගනිමු",
-    owner: "හිමිකරු",
-    employee: "සේවකයා",
-
-    noData: "දත්ත නොමැත",
-
-    posTitle: "POS / විකුණුම්",
-    productsTitle: "නිෂ්පාදන කළමනාකරණය",
-    stockTitle: "තොග කළමනාකරණය",
-    expensesTitle: "වියදම්",
-    reportsTitle: "වාර්තා",
-    employeesTitle: "සේවක කළමනාකරණය",
-    settingsTitle: "සැකසුම්",
-
-    comingSoon:
-      "මෙම කොටස ඊළඟ අදියරේදී සම්පූර්ණ කරනු ඇත.",
-
+    dashboard: "Dashboard",
+    pos: "POS / Sales",
+    products: "Products",
+    stock: "Stock",
+    expenses: "Expenses",
+    reports: "Reports",
+    employees: "Employees",
+    settings: "Settings",
     logout: "Logout",
 
-    loading: "පූරණය වෙමින්...",
-    today: "අද",
-    noSales: "අද විකුණුම් නොමැත",
-    accessDenied: "මෙම කොටස Owner සඳහා පමණි.",
+    welcome: "ආයුබෝවන්",
+    totalSales: "මුළු විකුණුම්",
+    todaySales: "අද විකුණුම්",
+    totalOrders: "මුළු Orders",
+    profit: "ලාභය",
+    lowStock: "අඩු Stock",
+    recentSales: "මෑත විකුණුම්",
 
-    payment: "ගෙවීම",
+    productsCount: "භාණ්ඩ ගණන",
+    noData: "දත්ත නොමැත",
 
-    productsEmpty:
-      "Products තාම එකතු කරලා නැහැ.",
+    username: "Username",
+    password: "Password",
+    login: "Login",
+    forgotPassword: "Password අමතකද?",
+    loginError: "Username හෝ Password වැරදියි.",
 
-    cartEmpty:
-      "Cart එක හිස්.",
+    productsTitle: "Products",
+    stockTitle: "Stock",
+    expensesTitle: "Expenses",
+    reportsTitle: "Reports",
+    employeesTitle: "Employees",
+    settingsTitle: "Settings",
 
-    completeSale:
-      "විකිණීම සම්පූර්ණ කරන්න",
+    currentSale: "වත්මන් බිල්පත",
+    total: "මුළු එකතුව",
+    paymentMethod: "ගෙවීමේ ක්‍රමය",
+    cash: "මුදල්",
+    card: "කාඩ්",
+    customerGave: "Customer අපට දුන් මුදල",
+    change: "ආපසු දිය යුතු මුදල",
+    remaining: "තව ගෙවිය යුතු මුදල",
+    completeSale: "බිල්පත අවසන් කරන්න",
+    clearBill: "බිල්පත Clear කරන්න",
+    productsEmpty: "Products නැහැ.",
+    cartEmpty: "භාණ්ඩ එකතු කරලා නැහැ.",
 
-    clearCart:
-      "Cart එක හිස් කරන්න",
+    saving: "Save වෙමින්...",
+    saleCompleted: "බිල්පත සාර්ථකව අවසන් කළා!",
+    saleFailed: "බිල්පත අවසන් කරන්න බැරි වුණා.",
+    paymentNotEnough: "Customer දුන් මුදල ප්‍රමාණවත් නැහැ.",
+    loginAgain: "කරුණාකර නැවත Login වෙන්න.",
+    cartEmptyError: "බිල්පත හිස්.",
 
-    paymentMethod:
-      "ගෙවීම් ක්‍රමය",
-
-    saleNotConnected:
-      "Sale save කිරීම ඊළඟ පියවරේදී connect කරමු."
+    language: "භාෂාව"
 
   },
 
@@ -157,67 +117,53 @@ const translations = {
     reports: "Reports",
     employees: "Employees",
     settings: "Settings",
-
-    sales: "Today's Sales",
-    orders: "Today's Orders",
-    profit: "Profit",
-    low: "Low Stock",
-    recent: "Recent Sales",
-
-    cash: "Cash",
-    card: "Card",
-
-    name: "Name",
-    price: "Selling Price",
-    cost: "Cost",
-    qty: "Quantity",
-
-    save: "Save",
-    add: "Add",
-
-    welcome: "Welcome",
-    owner: "Owner",
-    employee: "Employee",
-
-    noData: "No data",
-
-    posTitle: "POS / Sales",
-    productsTitle: "Product Management",
-    stockTitle: "Stock Management",
-    expensesTitle: "Expenses",
-    reportsTitle: "Reports",
-    employeesTitle: "Employee Management",
-    settingsTitle: "Settings",
-
-    comingSoon:
-      "This section will be completed in the next stage.",
-
     logout: "Logout",
 
-    loading: "Loading...",
-    today: "Today",
-    noSales: "No sales today",
-    accessDenied: "This section is for Owner only.",
+    welcome: "Welcome",
+    totalSales: "Total Sales",
+    todaySales: "Today's Sales",
+    totalOrders: "Total Orders",
+    profit: "Profit",
+    lowStock: "Low Stock",
+    recentSales: "Recent Sales",
 
-    payment: "Payment",
+    productsCount: "Products",
+    noData: "No data",
 
-    productsEmpty:
-      "No products have been added yet.",
+    username: "Username",
+    password: "Password",
+    login: "Login",
+    forgotPassword: "Forgot password?",
+    loginError: "Invalid username or password.",
 
-    cartEmpty:
-      "Cart is empty.",
+    productsTitle: "Products",
+    stockTitle: "Stock",
+    expensesTitle: "Expenses",
+    reportsTitle: "Reports",
+    employeesTitle: "Employees",
+    settingsTitle: "Settings",
 
-    completeSale:
-      "Complete Sale",
+    currentSale: "Current Sale",
+    total: "Total",
+    paymentMethod: "Payment Method",
+    cash: "Cash",
+    card: "Card",
+    customerGave: "Customer gave",
+    change: "Change",
+    remaining: "Remaining",
+    completeSale: "Complete Sale",
+    clearBill: "Clear Bill",
+    productsEmpty: "No products.",
+    cartEmpty: "No items added.",
 
-    clearCart:
-      "Clear Cart",
+    saving: "Saving...",
+    saleCompleted: "Sale completed successfully!",
+    saleFailed: "Sale could not be completed.",
+    paymentNotEnough: "Customer payment is not enough.",
+    loginAgain: "Please login again.",
+    cartEmptyError: "Cart is empty.",
 
-    paymentMethod:
-      "Payment Method",
-
-    saleNotConnected:
-      "Sale saving will be connected in the next step."
+    language: "Language"
 
   }
 
@@ -225,21 +171,15 @@ const translations = {
 
 
 // ============================================================
-// TRANSLATION
+// TRANSLATION HELPER
 // ============================================================
 
 function t(key) {
 
-  if (
-    translations[language] &&
-    translations[language][key]
-  ) {
-
-    return translations[language][key];
-
-  }
-
-  return key;
+  return (
+    dict[language] &&
+    dict[language][key]
+  ) || key;
 
 }
 
@@ -250,11 +190,8 @@ function t(key) {
 
 function money(value) {
 
-  const number =
-    Number(value || 0);
-
   return "Rs. " +
-    number.toLocaleString(
+    Number(value || 0).toLocaleString(
       "en-LK",
       {
         minimumFractionDigits: 2,
@@ -266,114 +203,45 @@ function money(value) {
 
 
 // ============================================================
-// DATE HELPERS
+// HTML ESCAPE
 // ============================================================
 
-function getTodayStart() {
+function escapeHTML(value) {
 
-  const date = new Date();
-
-  date.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-  return date;
-
-}
-
-
-function getTomorrowStart() {
-
-  const date = new Date();
-
-  date.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-  date.setDate(
-    date.getDate() + 1
-  );
-
-  return date;
-
-}
-
-
-function getRecordDate(record) {
-
-  return (
-    record.created_at ||
-    record.createdAt ||
-    record.date ||
-    record.sale_date ||
-    record.sold_at ||
-    null
-  );
-
-}
-
-
-function getRecordAmount(record) {
-
-  const possibleFields = [
-
-    "total_amount",
-    "total",
-    "grand_total",
-    "amount",
-    "sale_total",
-    "net_total",
-    "total_price"
-
-  ];
-
-
-  for (
-    const field of possibleFields
+  if (
+    value === null ||
+    value === undefined
   ) {
-
-    if (
-      record[field] !== undefined &&
-      record[field] !== null
-    ) {
-
-      const value =
-        Number(record[field]);
-
-
-      if (
-        !Number.isNaN(value)
-      ) {
-
-        return value;
-
-      }
-
-    }
-
+    return "";
   }
 
-
-  return 0;
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 }
 
 
-function getRecordPayment(record) {
+// ============================================================
+// DATE
+// ============================================================
 
-  const value =
-    record.payment_method ||
-    record.payment_type ||
-    record.method ||
-    "";
+function formatDate(value) {
 
-  return String(value);
+  if (!value) return "-";
+
+  const date = new Date(value);
+
+  return date.toLocaleString(
+    "en-LK",
+    {
+      dateStyle: "medium",
+      timeStyle: "short"
+    }
+  );
 
 }
 
@@ -385,15 +253,10 @@ function getRecordPayment(record) {
 function showLogin() {
 
   const loginScreen =
-    document.getElementById(
-      "loginScreen"
-    );
-
+    document.getElementById("loginScreen");
 
   const mainApp =
-    document.getElementById(
-      "mainApp"
-    );
+    document.getElementById("mainApp");
 
 
   if (loginScreen) {
@@ -417,21 +280,16 @@ function showLogin() {
 
 
 // ============================================================
-// MAIN APP SCREEN
+// APP SCREEN
 // ============================================================
 
 function showApp() {
 
   const loginScreen =
-    document.getElementById(
-      "loginScreen"
-    );
-
+    document.getElementById("loginScreen");
 
   const mainApp =
-    document.getElementById(
-      "mainApp"
-    );
+    document.getElementById("mainApp");
 
 
   if (loginScreen) {
@@ -465,12 +323,10 @@ async function loginUser() {
       "loginUsername"
     );
 
-
   const passwordInput =
     document.getElementById(
       "loginPassword"
     );
-
 
   const message =
     document.getElementById(
@@ -478,76 +334,53 @@ async function loginUser() {
     );
 
 
-  if (
-    !usernameInput ||
-    !passwordInput
-  ) {
-
-    return;
-
-  }
-
-
   const username =
-    usernameInput.value.trim();
-
+    usernameInput
+      ? usernameInput.value.trim()
+      : "";
 
   const password =
-    passwordInput.value;
+    passwordInput
+      ? passwordInput.value
+      : "";
+
+
+  if (!username || !password) {
+
+    if (message) {
+
+      message.textContent =
+        language === "en"
+          ? "Enter username and password."
+          : "Username සහ Password ඇතුළත් කරන්න.";
+
+    }
+
+    return;
+  }
 
 
   if (message) {
 
-    message.textContent = "";
-
-  }
-
-
-  if (
-    !username ||
-    !password
-  ) {
-
-    if (message) {
-
-      message.textContent =
-        "Username සහ Password දෙකම ඇතුළත් කරන්න.";
-
-    }
-
-    return;
-
-  }
-
-
-  if (!supabaseClient) {
-
-    if (message) {
-
-      message.textContent =
-        "Supabase connection error.";
-
-    }
-
-    return;
+    message.textContent =
+      language === "en"
+        ? "Logging in..."
+        : "Login වෙමින්...";
 
   }
 
 
   try {
 
-    if (message) {
+    // --------------------------------------------------------
+    // Username → email
+    // --------------------------------------------------------
 
-      message.textContent =
-        "Logging in...";
-
-    }
-
-
-    // Username → Email
-
-    const rpcResult =
-      await supabaseClient.rpc(
+    const {
+      data: emailData,
+      error: emailError
+    } =
+      await supabase.rpc(
         "get_login_email",
         {
           p_username: username
@@ -555,48 +388,39 @@ async function loginUser() {
       );
 
 
-    if (rpcResult.error) {
+    if (emailError) {
 
       console.error(
         "Username lookup error:",
-        rpcResult.error
+        emailError
       );
 
-
-      if (message) {
-
-        message.textContent =
-          "Login error. Please try again.";
-
-      }
-
-      return;
+      throw emailError;
 
     }
 
 
-    const email =
-      rpcResult.data;
+    const email = emailData;
 
 
     if (!email) {
 
-      if (message) {
-
-        message.textContent =
-          "Username හමු නොවීය.";
-
-      }
-
-      return;
+      throw new Error(
+        "Invalid username"
+      );
 
     }
 
 
-    // Supabase Login
+    // --------------------------------------------------------
+    // Supabase Auth
+    // --------------------------------------------------------
 
-    const loginResult =
-      await supabaseClient.auth.signInWithPassword({
+    const {
+      data,
+      error
+    } =
+      await supabase.auth.signInWithPassword({
 
         email: email,
 
@@ -605,51 +429,18 @@ async function loginUser() {
       });
 
 
-    if (loginResult.error) {
+    if (error) {
 
-      console.error(
-        "Login error:",
-        loginResult.error
-      );
-
-
-      if (message) {
-
-        message.textContent =
-          "Username හෝ Password වැරදියි.";
-
-      }
-
-      return;
+      throw error;
 
     }
 
 
     currentUser =
-      loginResult.data.user;
+      data.user;
 
-
-    // Load profile
 
     await loadProfile();
-
-
-    if (!currentProfile) {
-
-      if (message) {
-
-        message.textContent =
-          "User profile එක හමු නොවීය.";
-
-      }
-
-
-      await supabaseClient.auth.signOut();
-
-      return;
-
-    }
-
 
     showApp();
 
@@ -657,27 +448,18 @@ async function loginUser() {
 
     updateHeader();
 
-
-    // Employee → POS directly
-
-    if (
-      currentProfile.role ===
-      "employee"
-    ) {
-
-      show("pos");
-
-    } else {
-
-      show("dashboard");
-
-    }
+    await show(
+      currentProfile &&
+      currentProfile.role === "employee"
+        ? "pos"
+        : "dashboard"
+    );
 
 
   } catch (error) {
 
     console.error(
-      "Login exception:",
+      "Login error:",
       error
     );
 
@@ -685,7 +467,7 @@ async function loginUser() {
     if (message) {
 
       message.textContent =
-        "Login failed. Please try again.";
+        t("loginError");
 
     }
 
@@ -700,225 +482,61 @@ async function loginUser() {
 
 async function loadProfile() {
 
-  if (
-    !supabaseClient ||
-    !currentUser
-  ) {
+  if (!currentUser) {
 
-    return null;
+    currentProfile = null;
+
+    return;
 
   }
 
 
-  const result =
-    await supabaseClient
+  const {
+    data,
+    error
+  } =
+    await supabase
       .from("profiles")
-      .select("*")
+      .select(
+        "id, username, full_name, role, language"
+      )
       .eq(
         "id",
         currentUser.id
       )
-      .single();
+      .maybeSingle();
 
 
-  if (result.error) {
+  if (error) {
 
     console.error(
       "Profile error:",
-      result.error
+      error
     );
 
-
-    currentProfile = null;
-
-    return null;
+    throw error;
 
   }
 
 
   currentProfile =
-    result.data;
+    data;
 
 
-  if (
-    currentProfile.language
-  ) {
+  if (currentProfile) {
 
-    language =
-      currentProfile.language;
+    if (
+      currentProfile.language === "si" ||
+      currentProfile.language === "en"
+    ) {
 
+      language =
+        currentProfile.language;
 
-    localStorage.setItem(
-      "amba_lang",
-      language
-    );
-
-  }
-
-
-  return currentProfile;
-
-}
-
-
-// ============================================================
-// FORGOT PASSWORD
-// ============================================================
-
-async function forgotPassword() {
-
-  const usernameInput =
-    document.getElementById(
-      "loginUsername"
-    );
-
-
-  const message =
-    document.getElementById(
-      "loginMessage"
-    );
-
-
-  if (!usernameInput) {
-
-    return;
-
-  }
-
-
-  const username =
-    usernameInput.value.trim();
-
-
-  if (!username) {
-
-    if (message) {
-
-      message.textContent =
-        "මුලින් Username එක ඇතුළත් කරන්න.";
-
-    }
-
-    return;
-
-  }
-
-
-  if (!supabaseClient) {
-
-    return;
-
-  }
-
-
-  try {
-
-    if (message) {
-
-      message.textContent =
-        "Checking account...";
-
-    }
-
-
-    const rpcResult =
-      await supabaseClient.rpc(
-        "get_login_email",
-        {
-          p_username: username
-        }
+      localStorage.setItem(
+        "amba_language",
+        language
       );
-
-
-    if (rpcResult.error) {
-
-      console.error(
-        "Forgot password error:",
-        rpcResult.error
-      );
-
-
-      if (message) {
-
-        message.textContent =
-          "Request failed.";
-
-      }
-
-      return;
-
-    }
-
-
-    const email =
-      rpcResult.data;
-
-
-    if (!email) {
-
-      if (message) {
-
-        message.textContent =
-          "Username හමු නොවීය.";
-
-      }
-
-      return;
-
-    }
-
-
-    const resetResult =
-      await supabaseClient.auth
-        .resetPasswordForEmail(
-          email,
-          {
-            redirectTo:
-              window.location.origin
-          }
-        );
-
-
-    if (resetResult.error) {
-
-      console.error(
-        "Password reset error:",
-        resetResult.error
-      );
-
-
-      if (message) {
-
-        message.textContent =
-          "Password reset request failed.";
-
-      }
-
-      return;
-
-    }
-
-
-    if (message) {
-
-      message.textContent =
-        "Password reset link එක email එකට යවා ඇත.";
-
-    }
-
-
-  } catch (error) {
-
-    console.error(
-      "Forgot password exception:",
-      error
-    );
-
-
-    if (message) {
-
-      message.textContent =
-        "Something went wrong.";
 
     }
 
@@ -933,26 +551,7 @@ async function forgotPassword() {
 
 async function logoutUser() {
 
-  if (!supabaseClient) {
-
-    return;
-
-  }
-
-
-  try {
-
-    await supabaseClient.auth.signOut();
-
-  } catch (error) {
-
-    console.error(
-      "Logout error:",
-      error
-    );
-
-  }
-
+  await supabase.auth.signOut();
 
   currentUser = null;
 
@@ -960,52 +559,12 @@ async function logoutUser() {
 
   posCart = [];
 
-  posProducts = [];
+  customerPaid = 0;
 
   selectedPaymentMethod =
     "cash";
 
-
   showLogin();
-
-
-  const username =
-    document.getElementById(
-      "loginUsername"
-    );
-
-
-  const password =
-    document.getElementById(
-      "loginPassword"
-    );
-
-
-  const message =
-    document.getElementById(
-      "loginMessage"
-    );
-
-
-  if (username) {
-
-    username.value = "";
-
-  }
-
-
-  if (password) {
-
-    password.value = "";
-
-  }
-
-
-  if (message) {
-
-    message.textContent = "";
-
-  }
 
 }
 
@@ -1016,92 +575,54 @@ async function logoutUser() {
 
 function applyRolePermissions() {
 
-  const role =
-    currentProfile?.role ||
-    "employee";
+  const ownerOnlyMenus = [
+    "dashboardMenu",
+    "productsMenu",
+    "stockMenu",
+    "expensesMenu",
+    "reportsMenu",
+    "employeesMenu",
+    "settingsMenu"
+  ];
 
 
-  const employeesMenu =
+  const isOwner =
+    currentProfile &&
+    currentProfile.role === "owner";
+
+
+  ownerOnlyMenus.forEach(id => {
+
+    const element =
+      document.getElementById(id);
+
+    if (!element) return;
+
+
+    if (isOwner) {
+
+      element.style.display = "";
+
+    } else {
+
+      element.style.display = "none";
+
+    }
+
+  });
+
+
+  const posMenu =
     document.getElementById(
-      "employeesMenu"
+      "posMenu"
     );
 
 
-  const navButtons =
-    document.querySelectorAll(
-      "aside nav button"
-    );
+  if (posMenu) {
 
-
-  // Owner
-
-  if (
-    role === "owner"
-  ) {
-
-    if (employeesMenu) {
-
-      employeesMenu.style.display =
-        "";
-
-    }
-
-
-    navButtons.forEach(
-      function(button) {
-
-        button.style.display =
-          "";
-
-      }
-    );
-
-
-    return;
+    posMenu.style.display = "";
 
   }
-
-
-  // Employee
-
-  if (employeesMenu) {
-
-    employeesMenu.style.display =
-      "none";
-
-  }
-
-
-  navButtons.forEach(
-    function(button) {
-
-      const onclick =
-        button.getAttribute(
-          "onclick"
-        ) || "";
-
-
-      if (
-        onclick.includes(
-          "show('pos')"
-        ) ||
-        onclick.includes(
-          "logoutUser"
-        )
-      ) {
-
-        button.style.display =
-          "";
-
-      } else {
-
-        button.style.display =
-          "none";
-
-      }
-
-    }
-  );
 
 }
 
@@ -1117,69 +638,50 @@ function updateHeader() {
       "currentUser"
     );
 
+  if (userElement) {
+
+    userElement.textContent =
+      currentProfile
+        ? (
+            currentProfile.full_name ||
+            currentProfile.username
+          )
+        : "";
+
+  }
+
+
+  const langElement =
+    document.getElementById(
+      "lang"
+    );
+
+  if (langElement) {
+
+    langElement.textContent =
+      language === "si"
+        ? "සිං"
+        : "EN";
+
+  }
+
 
   const dateElement =
     document.getElementById(
       "date"
     );
 
-
-  const languageSelect =
-    document.getElementById(
-      "lang"
-    );
-
-
-  if (userElement) {
-
-    const username =
-      currentProfile?.username ||
-      currentUser?.email ||
-      "";
-
-
-    const role =
-      currentProfile?.role ===
-      "owner"
-
-        ? t("owner")
-
-        : t("employee");
-
-
-    userElement.textContent =
-      username +
-      " • " +
-      role;
-
-  }
-
-
   if (dateElement) {
 
-    const now =
-      new Date();
-
-
     dateElement.textContent =
-      now.toLocaleDateString(
-        language === "si"
-          ? "si-LK"
-          : "en-LK",
+      new Date().toLocaleDateString(
+        "en-LK",
         {
           year: "numeric",
           month: "long",
           day: "numeric"
         }
       );
-
-  }
-
-
-  if (languageSelect) {
-
-    languageSelect.value =
-      language;
 
   }
 
@@ -1190,34 +692,28 @@ function updateHeader() {
 // LANGUAGE
 // ============================================================
 
-async function setLang(value) {
+async function setLang(lang) {
 
   if (
-    value !== "si" &&
-    value !== "en"
+    lang !== "si" &&
+    lang !== "en"
   ) {
-
-    value = "si";
-
+    return;
   }
 
 
-  language = value;
+  language = lang;
 
 
   localStorage.setItem(
-    "amba_lang",
+    "amba_language",
     language
   );
 
 
-  if (
-    currentProfile &&
-    currentUser &&
-    supabaseClient
-  ) {
+  if (currentUser) {
 
-    await supabaseClient
+    await supabase
       .from("profiles")
       .update({
         language: language
@@ -1233,16 +729,11 @@ async function setLang(value) {
   updateHeader();
 
 
-  if (
-    currentProfile?.role ===
-    "employee"
-  ) {
+  if (currentPage) {
 
-    show("pos");
-
-  } else {
-
-    show(currentPage);
+    await show(
+      currentPage
+    );
 
   }
 
@@ -1250,33 +741,32 @@ async function setLang(value) {
 
 
 // ============================================================
-// PAGE NAVIGATION
+// SHOW PAGE
 // ============================================================
 
-function show(pageName) {
+async function show(page) {
 
-  // ----------------------------------------------------------
-  // SECURITY: Employee can only access POS
-  // ----------------------------------------------------------
+  if (!currentProfile) {
+
+    return;
+
+  }
+
+
+  // Employees can ONLY access POS
 
   if (
-    currentProfile?.role ===
-    "employee"
+    currentProfile.role === "employee" &&
+    page !== "pos"
   ) {
 
-    if (
-      pageName !== "pos"
-    ) {
-
-      pageName = "pos";
-
-    }
+    page = "pos";
 
   }
 
 
   currentPage =
-    pageName;
+    page;
 
 
   const title =
@@ -1317,90 +807,108 @@ function show(pageName) {
 
 
     title.textContent =
-      titles[pageName] ||
-      pageName;
+      titles[page] ||
+      "අඹ සිසිල";
 
   }
 
 
-  // Close mobile menu
+  document
+    .querySelectorAll(
+      ".nav-btn"
+    )
+    .forEach(button => {
 
-  const sidebar =
+      button.classList.remove(
+        "active"
+      );
+
+    });
+
+
+  const activeButton =
     document.querySelector(
-      "aside"
+      `[data-page="${page}"]`
     );
 
 
-  if (sidebar) {
+  if (activeButton) {
 
-    sidebar.classList.remove(
-      "open"
+    activeButton.classList.add(
+      "active"
     );
 
   }
 
 
-  switch (pageName) {
+  if (page === "dashboard") {
 
-    case "dashboard":
+    await dashboard();
 
-      dashboard();
+    return;
 
-      break;
-
-
-    case "pos":
-
-      posPage();
-
-      break;
+  }
 
 
-    case "products":
+  if (page === "pos") {
 
-      productsPage();
+    await posPage();
 
-      break;
+    return;
 
-
-    case "stock":
-
-      stockPage();
-
-      break;
+  }
 
 
-    case "expenses":
+  if (page === "products") {
 
-      expensesPage();
+    await productsPage();
 
-      break;
+    return;
 
-
-    case "reports":
-
-      reportsPage();
-
-      break;
+  }
 
 
-    case "employees":
+  if (page === "stock") {
 
-      employeesPage();
+    await stockPage();
 
-      break;
+    return;
 
-
-    case "settings":
-
-      settingsPage();
-
-      break;
+  }
 
 
-    default:
+  if (page === "expenses") {
 
-      dashboard();
+    await expensesPage();
+
+    return;
+
+  }
+
+
+  if (page === "reports") {
+
+    await reportsPage();
+
+    return;
+
+  }
+
+
+  if (page === "employees") {
+
+    await employeesPage();
+
+    return;
+
+  }
+
+
+  if (page === "settings") {
+
+    await settingsPage();
+
+    return;
 
   }
 
@@ -1419,590 +927,321 @@ async function dashboard() {
     );
 
 
-  if (!app) {
+  if (!app) return;
 
-    return;
+
+  // ----------------------------------------------------------
+  // Sales
+  // ----------------------------------------------------------
+
+  let salesQuery =
+    supabase
+      .from("sales")
+      .select(
+        "id, total, payment_method, created_at"
+      );
+
+
+  const {
+    data: sales,
+    error: salesError
+  } =
+    await salesQuery;
+
+
+  if (salesError) {
+
+    console.error(
+      "Dashboard sales error:",
+      salesError
+    );
 
   }
 
 
-  // Employee should never see Dashboard
-
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
-
-    show("pos");
-
-    return;
-
-  }
+  const saleRows =
+    sales || [];
 
 
-  // Loading UI
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("dashboard") +
-      '</h2>' +
-
-      '<p>' +
-        t("loading") +
-      '</p>' +
-
-    '</div>';
+  const totalSales =
+    saleRows.reduce(
+      (sum, sale) =>
+        sum +
+        Number(
+          sale.total || 0
+        ),
+      0
+    );
 
 
-  let sales = [];
+  const today =
+    new Date();
 
-  let products = [];
-
-  let expenses = [];
-
-
-  // ----------------------------------------------------------
-  // LOAD DATA
-  // ----------------------------------------------------------
-
-  if (supabaseClient) {
-
-    const salesResult =
-      await supabaseClient
-        .from("sales")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        )
-        .limit(500);
-
-
-    if (
-      salesResult.error
-    ) {
-
-      console.error(
-        "Sales dashboard error:",
-        salesResult.error
-      );
-
-    } else {
-
-      sales =
-        salesResult.data ||
-        [];
-
-    }
-
-
-    const productsResult =
-      await supabaseClient
-        .from("products")
-        .select("*")
-        .limit(500);
-
-
-    if (
-      productsResult.error
-    ) {
-
-      console.error(
-        "Products dashboard error:",
-        productsResult.error
-      );
-
-    } else {
-
-      products =
-        productsResult.data ||
-        [];
-
-    }
-
-
-    const expensesResult =
-      await supabaseClient
-        .from("expenses")
-        .select("*")
-        .limit(500);
-
-
-    if (
-      expensesResult.error
-    ) {
-
-      console.error(
-        "Expenses dashboard error:",
-        expensesResult.error
-      );
-
-    } else {
-
-      expenses =
-        expensesResult.data ||
-        [];
-
-    }
-
-  }
-
-
-  // ----------------------------------------------------------
-  // TODAY FILTER
-  // ----------------------------------------------------------
-
-  const todayStart =
-    getTodayStart();
-
-
-  const tomorrowStart =
-    getTomorrowStart();
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
 
 
   const todaySales =
-    sales.filter(
-      function(record) {
+    saleRows
+      .filter(sale => {
 
-        const dateValue =
-          getRecordDate(record);
-
-
-        if (!dateValue) {
-
-          return false;
-
-        }
-
-
-        const date =
-          new Date(dateValue);
-
-
-        return (
-          date >= todayStart &&
-          date < tomorrowStart
-        );
-
-      }
-    );
-
-
-  const todayExpenses =
-    expenses.filter(
-      function(record) {
-
-        const dateValue =
-          getRecordDate(record);
-
-
-        if (!dateValue) {
-
-          return false;
-
-        }
-
-
-        const date =
-          new Date(dateValue);
-
-
-        return (
-          date >= todayStart &&
-          date < tomorrowStart
-        );
-
-      }
-    );
-
-
-  // ----------------------------------------------------------
-  // TODAY SALES TOTAL
-  // ----------------------------------------------------------
-
-  const todaySalesTotal =
-    todaySales.reduce(
-      function(total, record) {
-
-        return (
-          total +
-          getRecordAmount(record)
-        );
-
-      },
-      0
-    );
-
-
-  // ----------------------------------------------------------
-  // TODAY EXPENSE TOTAL
-  // ----------------------------------------------------------
-
-  const todayExpenseTotal =
-    todayExpenses.reduce(
-      function(total, record) {
-
-        return (
-          total +
-          getRecordAmount(record)
-        );
-
-      },
-      0
-    );
-
-
-  // ----------------------------------------------------------
-  // TEMP PROFIT
-  // ----------------------------------------------------------
-
-  const estimatedProfit =
-    todaySalesTotal -
-    todayExpenseTotal;
-
-
-  // ----------------------------------------------------------
-  // LOW STOCK
-  // ----------------------------------------------------------
-
-  const lowStockProducts =
-    products.filter(
-      function(product) {
-
-        const qty =
-          Number(
-            product.stock_qty ??
-            product.stock ??
-            product.quantity ??
-            product.qty ??
-            0
+        const d =
+          new Date(
+            sale.created_at
           );
 
+        return d >= today;
 
-        const minimum =
+      })
+      .reduce(
+        (sum, sale) =>
+          sum +
           Number(
-            product.min_stock ??
-            product.minimum_stock ??
-            product.low_stock ??
-            0
-          );
+            sale.total || 0
+          ),
+        0
+      );
 
 
-        if (
-          minimum > 0 &&
-          qty <= minimum
-        ) {
+  // ----------------------------------------------------------
+  // Products
+  // ----------------------------------------------------------
 
-          return true;
-
+  const {
+    count: productCount
+  } =
+    await supabase
+      .from("products")
+      .select(
+        "id",
+        {
+          count: "exact",
+          head: true
         }
+      )
+      .eq(
+        "active",
+        true
+      );
 
 
-        return (
-          minimum === 0 &&
-          qty <= 0
-        );
+  // ----------------------------------------------------------
+  // Low stock
+  // ----------------------------------------------------------
 
+  const {
+    data: lowStock
+  } =
+    await supabase
+      .from("ingredients")
+      .select(
+        "id, name, current_stock, min_stock"
+      )
+      .lte(
+        "current_stock",
+        supabase
+          ? 0
+          : 0
+      )
+      .limit(5);
+
+
+  app.innerHTML = `
+
+    <div class="dashboard-grid">
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          ${t("totalSales")}
+        </div>
+
+        <div class="stat-value">
+          ${money(totalSales)}
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          ${t("todaySales")}
+        </div>
+
+        <div class="stat-value">
+          ${money(todaySales)}
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          ${t("totalOrders")}
+        </div>
+
+        <div class="stat-value">
+          ${saleRows.length}
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          ${t("productsCount")}
+        </div>
+
+        <div class="stat-value">
+          ${productCount || 0}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>
+        ${t("recentSales")}
+      </h2>
+
+      ${
+        saleRows.length === 0
+          ? `<p>${t("noData")}</p>`
+          : `
+            <div class="table-wrap">
+
+              <table>
+
+                <thead>
+
+                  <tr>
+                    <th>Date</th>
+                    <th>Payment</th>
+                    <th>Total</th>
+                  </tr>
+
+                </thead>
+
+                <tbody>
+
+                  ${
+                    saleRows
+                      .slice(-10)
+                      .reverse()
+                      .map(sale => `
+                        <tr>
+
+                          <td>
+                            ${formatDate(
+                              sale.created_at
+                            )}
+                          </td>
+
+                          <td>
+                            ${escapeHTML(
+                              sale.payment_method
+                            )}
+                          </td>
+
+                          <td>
+                            ${money(
+                              sale.total
+                            )}
+                          </td>
+
+                        </tr>
+                      `)
+                      .join("")
+                  }
+
+                </tbody>
+
+              </table>
+
+            </div>
+          `
       }
-    );
 
+    </div>
 
-  // ----------------------------------------------------------
-  // RECENT SALES
-  // ----------------------------------------------------------
-
-  const recentSales =
-    sales.slice(
-      0,
-      8
-    );
-
-
-  // ----------------------------------------------------------
-  // RECENT SALES HTML
-  // ----------------------------------------------------------
-
-  let recentHTML = "";
-
-
-  if (
-    recentSales.length === 0
-  ) {
-
-    recentHTML =
-      '<div class="empty">' +
-        t("noSales") +
-      '</div>';
-
-  } else {
-
-    recentHTML =
-
-      '<div style="overflow-x:auto;">' +
-
-        '<table class="table">' +
-
-          '<thead>' +
-
-            '<tr>' +
-
-              '<th>' +
-                t("today") +
-              '</th>' +
-
-              '<th>' +
-                t("payment") +
-              '</th>' +
-
-              '<th>' +
-                t("sales") +
-              '</th>' +
-
-            '</tr>' +
-
-          '</thead>' +
-
-          '<tbody>';
-
-
-    recentSales.forEach(
-      function(record) {
-
-        const dateValue =
-          getRecordDate(record);
-
-
-        const amount =
-          getRecordAmount(record);
-
-
-        const payment =
-          getRecordPayment(record);
-
-
-        let dateText =
-          "-";
-
-
-        if (dateValue) {
-
-          const date =
-            new Date(dateValue);
-
-
-          dateText =
-            date.toLocaleString(
-              language === "si"
-                ? "si-LK"
-                : "en-LK",
-              {
-                dateStyle:
-                  "short",
-
-                timeStyle:
-                  "short"
-              }
-            );
-
-        }
-
-
-        recentHTML +=
-
-          '<tr>' +
-
-            '<td>' +
-              dateText +
-            '</td>' +
-
-            '<td>' +
-              (
-                payment ||
-                "-"
-              ) +
-            '</td>' +
-
-            '<td>' +
-              money(amount) +
-            '</td>' +
-
-          '</tr>';
-
-      }
-    );
-
-
-    recentHTML +=
-
-          '</tbody>' +
-
-        '</table>' +
-
-      '</div>';
-
-  }
-
-
-  // ----------------------------------------------------------
-  // DASHBOARD HTML
-  // ----------------------------------------------------------
-
-  app.innerHTML =
-
-    '<div class="cards">' +
-
-      '<div class="card">' +
-
-        '<small>' +
-          t("sales") +
-        '</small>' +
-
-        '<div class="num">' +
-          money(todaySalesTotal) +
-        '</div>' +
-
-      '</div>' +
-
-
-      '<div class="card">' +
-
-        '<small>' +
-          t("orders") +
-        '</small>' +
-
-        '<div class="num">' +
-          todaySales.length +
-        '</div>' +
-
-      '</div>' +
-
-
-      '<div class="card">' +
-
-        '<small>' +
-          t("profit") +
-        '</small>' +
-
-        '<div class="num">' +
-          money(estimatedProfit) +
-        '</div>' +
-
-      '</div>' +
-
-
-      '<div class="card">' +
-
-        '<small>' +
-          t("low") +
-        '</small>' +
-
-        '<div class="num">' +
-          lowStockProducts.length +
-        '</div>' +
-
-      '</div>' +
-
-    '</div>' +
-
-
-    '<div class="grid">' +
-
-      '<div class="panel">' +
-
-        '<h2>' +
-          t("recent") +
-        '</h2>' +
-
-        recentHTML +
-
-      '</div>' +
-
-
-      '<div class="panel">' +
-
-        '<h2>' +
-          t("today") +
-        '</h2>' +
-
-        '<p>' +
-          t("sales") +
-          ': <strong>' +
-          money(todaySalesTotal) +
-          '</strong>' +
-        '</p>' +
-
-        '<p>' +
-          t("orders") +
-          ': <strong>' +
-          todaySales.length +
-          '</strong>' +
-        '</p>' +
-
-        '<p>' +
-          t("profit") +
-          ': <strong>' +
-          money(estimatedProfit) +
-          '</strong>' +
-        '</p>' +
-
-        '<p>' +
-          t("low") +
-          ': <strong>' +
-          lowStockProducts.length +
-          '</strong>' +
-        '</p>' +
-
-      '</div>' +
-
-    '</div>';
+  `;
 
 }
 
 
 // ============================================================
-// POS - LOAD PRODUCTS
+// POS STATE
+// ============================================================
+
+let posProducts = [];
+
+let posCart = [];
+
+let selectedPaymentMethod =
+  "cash";
+
+let customerPaid = 0;
+
+
+// ============================================================
+// LOAD POS PRODUCTS
 // ============================================================
 
 async function loadPOSProducts() {
 
-  if (!supabaseClient) {
-
-    return [];
-
-  }
-
-
-  const result =
-    await supabaseClient
+  const {
+    data,
+    error
+  } =
+    await supabase
       .from("products")
-      .select("*")
+      .select(`
+        id,
+        name_si,
+        name_en,
+        selling_price,
+        active
+      `)
+      .eq(
+        "active",
+        true
+      )
       .order(
-        "name",
+        "name_si",
         {
           ascending: true
         }
       );
 
 
-  if (result.error) {
+  if (error) {
 
     console.error(
       "POS products error:",
-      result.error
+      error
     );
 
+    alert(
+      "Products load karanna bari una."
+    );
 
-    return [];
+    return;
 
   }
 
 
-  return result.data || [];
+  posProducts =
+    data || [];
 
 }
 
@@ -2013,49 +1252,7 @@ async function loadPOSProducts() {
 
 async function posPage() {
 
-  const app =
-    document.getElementById(
-      "app"
-    );
-
-
-  if (!app) {
-
-    return;
-
-  }
-
-
-  // ----------------------------------------------------------
-  // Loading
-  // ----------------------------------------------------------
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("posTitle") +
-      '</h2>' +
-
-      '<p>' +
-        t("loading") +
-      '</p>' +
-
-    '</div>';
-
-
-  // ----------------------------------------------------------
-  // Load products
-  // ----------------------------------------------------------
-
-  posProducts =
-    await loadPOSProducts();
-
-
-  // ----------------------------------------------------------
-  // Render POS
-  // ----------------------------------------------------------
+  await loadPOSProducts();
 
   renderPOS();
 
@@ -2063,7 +1260,7 @@ async function posPage() {
 
 
 // ============================================================
-// POS - RENDER
+// RENDER POS
 // ============================================================
 
 function renderPOS() {
@@ -2074,112 +1271,70 @@ function renderPOS() {
     );
 
 
-  if (!app) {
-
-    return;
-
-  }
+  if (!app) return;
 
 
-  // ----------------------------------------------------------
-  // PRODUCTS
-  // ----------------------------------------------------------
-
-  let productsHTML = "";
+  let productHTML = "";
 
 
   if (
     posProducts.length === 0
   ) {
 
-    productsHTML =
-
-      '<div class="empty">' +
-
-        '🍲 ' +
-        t("productsEmpty") +
-
-        '<br><br>' +
-
-        (
-          language === "si"
-            ? "Owner → Products section එකෙන් products add කරන්න."
-            : "Add products from Owner → Products section."
-        ) +
-
-      '</div>';
+    productHTML = `
+      <div class="empty-state">
+        ${t("productsEmpty")}
+      </div>
+    `;
 
   } else {
 
-    productsHTML =
+    productHTML =
+      posProducts
+        .map(product => {
 
-      '<div class="pos-product-grid">';
-
-
-    posProducts.forEach(
-      function(product) {
-
-        const price =
-          Number(
-            product.price ??
-            product.selling_price ??
-            product.sale_price ??
-            0
-          );
-
-
-        const name =
-          product.name ||
-          product.product_name ||
-          "Product";
+          const productName =
+            language === "en"
+              ? (
+                  product.name_en ||
+                  product.name_si
+                )
+              : (
+                  product.name_si ||
+                  product.name_en
+                );
 
 
-        const safeName =
-          String(name)
-            .replace(
-              /'/g,
-              "\\'"
-            )
-            .replace(
-              /"/g,
-              "&quot;"
-            );
+          return `
+
+            <button
+              class="pos-product"
+              onclick="addToPOSCart('${product.id}')"
+            >
+
+              <div class="pos-product-name">
+
+                ${escapeHTML(
+                  productName
+                )}
+
+              </div>
 
 
-        productsHTML +=
+              <div class="pos-product-price">
 
-          '<button ' +
+                ${money(
+                  product.selling_price
+                )}
 
-            'class="pos-product" ' +
+              </div>
 
-            'onclick="addToPOSCart(\'' +
+            </button>
 
-              String(product.id) +
+          `;
 
-            '\')"' +
-
-          '>' +
-
-            '<div class="pos-product-name">' +
-
-              safeName +
-
-            '</div>' +
-
-            '<div class="pos-product-price">' +
-
-              money(price) +
-
-            '</div>' +
-
-          '</button>';
-
-      }
-    );
-
-
-    productsHTML +=
-      '</div>';
+        })
+        .join("");
 
   }
 
@@ -2195,111 +1350,115 @@ function renderPOS() {
     posCart.length === 0
   ) {
 
-    cartHTML =
-
-      '<div class="empty">' +
-
-        '🛒 ' +
-        t("cartEmpty") +
-
-      '</div>';
+    cartHTML = `
+      <div class="empty-state">
+        ${t("cartEmpty")}
+      </div>
+    `;
 
   } else {
 
     cartHTML =
+      posCart
+        .map(
+          (item, index) => {
 
-      '<div class="pos-cart-list">';
-
-
-    posCart.forEach(
-      function(item, index) {
-
-        cartHTML +=
-
-          '<div class="pos-cart-item">' +
-
-            '<div class="pos-cart-info">' +
-
-              '<strong>' +
-                item.name +
-              '</strong>' +
-
-              '<small>' +
-
-                money(item.price) +
-
-                ' × ' +
-
-                item.qty +
-
-              '</small>' +
-
-            '</div>' +
+            const productName =
+              language === "en"
+                ? (
+                    item.name_en ||
+                    item.name_si
+                  )
+                : (
+                    item.name_si ||
+                    item.name_en
+                  );
 
 
-            '<div class="pos-cart-controls">' +
-
-              '<button ' +
-
-                'onclick="changePOSQty(' +
-
-                  index +
-
-                  ',-1)"' +
-
-              '>−</button>' +
+            const subtotal =
+              Number(
+                item.selling_price
+              ) *
+              Number(
+                item.quantity
+              );
 
 
-              '<span>' +
+            return `
 
-                item.qty +
-
-              '</span>' +
+              <div class="pos-cart-item">
 
 
-              '<button ' +
+                <div class="pos-cart-info">
 
-                'onclick="changePOSQty(' +
+                  <strong>
 
-                  index +
+                    ${escapeHTML(
+                      productName
+                    )}
 
-                  ',1)"' +
-
-              '>+</button>' +
-
-
-              '<button ' +
-
-                'class="pos-remove"' +
-
-                'onclick="removePOSItem(' +
-
-                  index +
-
-                ')"' +
-
-              '>×</button>' +
-
-            '</div>' +
+                  </strong>
 
 
-            '<strong>' +
+                  <small>
 
-              money(
-                item.price *
-                item.qty
-              ) +
+                    ${money(
+                      item.selling_price
+                    )}
+                    ×
+                    ${item.quantity}
 
-            '</strong>' +
+                  </small>
 
-          '</div>';
-
-      }
-    );
+                </div>
 
 
-    cartHTML +=
-      '</div>';
+                <div class="pos-cart-controls">
+
+                  <button
+                    onclick="changePOSQty(${index}, -1)"
+                  >
+                    −
+                  </button>
+
+
+                  <strong>
+                    ${item.quantity}
+                  </strong>
+
+
+                  <button
+                    onclick="changePOSQty(${index}, 1)"
+                  >
+                    +
+                  </button>
+
+
+                  <button
+                    class="pos-remove"
+                    onclick="removePOSItem(${index})"
+                  >
+                    ×
+                  </button>
+
+                </div>
+
+
+                <strong>
+
+                  ${money(
+                    subtotal
+                  )}
+
+                </strong>
+
+              </div>
+
+            `;
+
+          }
+        )
+        .join("");
 
   }
 
@@ -2312,244 +1471,343 @@ function renderPOS() {
     getPOSCartTotal();
 
 
+  const paid =
+    Number(
+      customerPaid
+    ) || 0;
+
+
+  const change =
+    paid >= total
+      ? paid - total
+      : 0;
+
+
+  const remaining =
+    paid < total
+      ? total - paid
+      : 0;
+
+
   // ----------------------------------------------------------
-  // FULL POS
+  // CASH
   // ----------------------------------------------------------
 
-  app.innerHTML =
-
-    '<div class="pos-layout">' +
+  let cashHTML = "";
 
 
-      // ------------------------------------------------------
-      // PRODUCT SIDE
-      // ------------------------------------------------------
+  if (
+    selectedPaymentMethod ===
+    "cash"
+  ) {
 
-      '<div class="panel pos-products-panel">' +
+    cashHTML = `
 
-        '<div class="pos-panel-header">' +
+      <div
+        style="
+          margin-top:15px;
+        "
+      >
 
-          '<h2>🍲 Products</h2>' +
+        <div class="payment-title">
 
-        '</div>' +
+          ${t("customerGave")}
 
-        productsHTML +
-
-      '</div>' +
-
-
-      // ------------------------------------------------------
-      // CART SIDE
-      // ------------------------------------------------------
-
-      '<div class="panel pos-cart-panel">' +
-
-        '<div class="pos-panel-header">' +
-
-          '<h2>🛒 Cart</h2>' +
-
-        '</div>' +
-
-        cartHTML +
+        </div>
 
 
-        '<div class="pos-summary">' +
-
-          '<div class="pos-total-row">' +
-
-            '<span>Total</span>' +
-
-            '<strong>' +
-
-              money(total) +
-
-            '</strong>' +
-
-          '</div>' +
-
-
-          '<div class="payment-title">' +
-
-            t("paymentMethod") +
-
-          '</div>' +
+        <input
+          id="customerPaidInput"
+          type="number"
+          min="0"
+          step="0.01"
+          value="${customerPaid || ""}"
+          placeholder="0.00"
+          oninput="updateCustomerPaid(this.value)"
+          style="
+            width:100%;
+            box-sizing:border-box;
+            padding:12px;
+            border:1px solid #ccd6d0;
+            border-radius:8px;
+            font-size:18px;
+          "
+        />
 
 
-          '<div class="payment-buttons">' +
+        ${
+          paid >= total &&
+          total > 0
+            ? `
+
+              <div
+                style="
+                  margin-top:10px;
+                  padding:10px;
+                  background:#e9f5ed;
+                  border-radius:8px;
+                  color:#176542;
+                "
+              >
+
+                <strong>
+
+                  ${t("change")}:
+
+                  ${money(
+                    change
+                  )}
+
+                </strong>
+
+              </div>
+
+            `
+            : ""
+        }
 
 
-            '<button ' +
+        ${
+          paid < total &&
+          paid > 0
+            ? `
 
-              'class="' +
+              <div
+                style="
+                  margin-top:10px;
+                  padding:10px;
+                  background:#fff3cd;
+                  border-radius:8px;
+                  color:#7a5b00;
+                "
+              >
 
+                <strong>
+
+                  ${t("remaining")}:
+
+                  ${money(
+                    remaining
+                  )}
+
+                </strong>
+
+              </div>
+
+            `
+            : ""
+        }
+
+      </div>
+
+    `;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // POS UI
+  // ----------------------------------------------------------
+
+  app.innerHTML = `
+
+    <div class="pos-layout">
+
+
+      <div class="card">
+
+        <div class="pos-panel-header">
+
+          <h2>
+            ${t("products")}
+          </h2>
+
+        </div>
+
+
+        <div class="pos-product-grid">
+
+          ${productHTML}
+
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <div class="pos-panel-header">
+
+          <h2>
+            ${t("currentSale")}
+          </h2>
+
+        </div>
+
+
+        <div class="pos-cart-list">
+
+          ${cartHTML}
+
+        </div>
+
+
+        <div class="pos-summary">
+
+
+          <div class="pos-total-row">
+
+            <strong>
+              ${t("total")}
+            </strong>
+
+            <strong>
+              ${money(total)}
+            </strong>
+
+          </div>
+
+
+          <div class="payment-title">
+
+            ${t("paymentMethod")}
+
+          </div>
+
+
+          <div class="payment-buttons">
+
+
+            <button
+              class="${
+                selectedPaymentMethod === "cash"
+                  ? "payment-active"
+                  : ""
+              }"
+              onclick="selectPOSPayment('cash')"
+            >
+
+              ${t("cash")}
+
+            </button>
+
+
+            <button
+              class="${
+                selectedPaymentMethod === "card"
+                  ? "payment-active"
+                  : ""
+              }"
+              onclick="selectPOSPayment('card')"
+            >
+
+              ${t("card")}
+
+            </button>
+
+
+          </div>
+
+
+          ${cashHTML}
+
+
+          <button
+            class="primary-btn pos-complete-btn"
+            onclick="completePOSSale()"
+            ${
+              posCart.length === 0 ||
               (
                 selectedPaymentMethod ===
-                "cash"
-
-                  ? "payment-active"
-
-                  : ""
-              ) +
-
-              '" ' +
-
-              'onclick="selectPOSPayment(\'cash\')"' +
-
-            '>' +
-
-              '💵 ' +
-              t("cash") +
-
-            '</button>' +
-
-
-            '<button ' +
-
-              'class="' +
-
-              (
-                selectedPaymentMethod ===
-                "card"
-
-                  ? "payment-active"
-
-                  : ""
-              ) +
-
-              '" ' +
-
-              'onclick="selectPOSPayment(\'card\')"' +
-
-            '>' +
-
-              '💳 ' +
-              t("card") +
-
-            '</button>' +
-
-
-          '</div>' +
-
-
-          '<button ' +
-
-            'class="btn pos-complete-btn"' +
-
-            'onclick="completePOSSale()"' +
-
-            (
-              posCart.length === 0
-
-                ? " disabled"
-
+                "cash" &&
+                Number(
+                  customerPaid
+                ) < total
+              )
+                ? "disabled"
                 : ""
-            ) +
+            }
+          >
 
-          '>' +
+            ${t("completeSale")}
 
-            '✅ ' +
-            t("completeSale") +
-
-          '</button>' +
+          </button>
 
 
-          '<button ' +
-
-            'class="btn alt pos-clear-btn"' +
-
-            'onclick="clearPOSCart()"' +
-
-            (
+          <button
+            class="secondary-btn pos-clear-btn"
+            onclick="clearPOSCart()"
+            ${
               posCart.length === 0
-
-                ? " disabled"
-
+                ? "disabled"
                 : ""
-            ) +
+            }
+          >
 
-          '>' +
+            ${t("clearBill")}
 
-            '🗑️ ' +
-            t("clearCart") +
-
-          '</button>' +
+          </button>
 
 
-        '</div>' +
+        </div>
 
-      '</div>' +
+      </div>
 
+    </div>
 
-    '</div>';
+  `;
 
 }
 
 
 // ============================================================
-// POS - ADD TO CART
+// ADD TO CART
 // ============================================================
 
-function addToPOSCart(productId) {
+function addToPOSCart(
+  productId
+) {
 
   const product =
     posProducts.find(
-      function(item) {
-
-        return (
-          String(item.id) ===
-          String(productId)
-        );
-
-      }
+      p => p.id === productId
     );
 
 
-  if (!product) {
-
-    return;
-
-  }
+  if (!product) return;
 
 
   const existing =
     posCart.find(
-      function(item) {
-
-        return (
-          String(item.id) ===
-          String(product.id)
-        );
-
-      }
+      item =>
+        item.product_id ===
+        productId
     );
 
 
   if (existing) {
 
-    existing.qty += 1;
+    existing.quantity += 1;
 
   } else {
 
     posCart.push({
 
-      id:
+      product_id:
         product.id,
 
-      name:
-        product.name ||
-        product.product_name ||
-        "Product",
+      name_si:
+        product.name_si,
 
-      price:
+      name_en:
+        product.name_en,
+
+      selling_price:
         Number(
-          product.price ??
-          product.selling_price ??
-          product.sale_price ??
-          0
+          product.selling_price
         ),
 
-      qty:
-        1
+      quantity: 1
 
     });
 
@@ -2562,7 +1820,7 @@ function addToPOSCart(productId) {
 
 
 // ============================================================
-// POS - CHANGE QUANTITY
+// CHANGE QUANTITY
 // ============================================================
 
 function changePOSQty(
@@ -2570,21 +1828,15 @@ function changePOSQty(
   amount
 ) {
 
-  if (
-    !posCart[index]
-  ) {
-
-    return;
-
-  }
+  if (!posCart[index]) return;
 
 
-  posCart[index].qty +=
+  posCart[index].quantity +=
     amount;
 
 
   if (
-    posCart[index].qty <= 0
+    posCart[index].quantity <= 0
   ) {
 
     posCart.splice(
@@ -2601,18 +1853,14 @@ function changePOSQty(
 
 
 // ============================================================
-// POS - REMOVE ITEM
+// REMOVE ITEM
 // ============================================================
 
-function removePOSItem(index) {
+function removePOSItem(
+  index
+) {
 
-  if (
-    !posCart[index]
-  ) {
-
-    return;
-
-  }
+  if (!posCart[index]) return;
 
 
   posCart.splice(
@@ -2627,21 +1875,26 @@ function removePOSItem(index) {
 
 
 // ============================================================
-// POS - TOTAL
+// GET TOTAL
 // ============================================================
 
 function getPOSCartTotal() {
 
   return posCart.reduce(
-    function(total, item) {
+    (
+      total,
+      item
+    ) => {
 
-      return (
-        total +
+      return total +
         (
-          Number(item.price) *
-          Number(item.qty)
-        )
-      );
+          Number(
+            item.selling_price
+          ) *
+          Number(
+            item.quantity
+          )
+        );
 
     },
     0
@@ -2651,23 +1904,24 @@ function getPOSCartTotal() {
 
 
 // ============================================================
-// POS - PAYMENT METHOD
+// SELECT PAYMENT
 // ============================================================
 
-function selectPOSPayment(method) {
-
-  if (
-    method !== "cash" &&
-    method !== "card"
-  ) {
-
-    method = "cash";
-
-  }
-
+function selectPOSPayment(
+  method
+) {
 
   selectedPaymentMethod =
     method;
+
+
+  if (
+    method === "card"
+  ) {
+
+    customerPaid = 0;
+
+  }
 
 
   renderPOS();
@@ -2676,15 +1930,64 @@ function selectPOSPayment(method) {
 
 
 // ============================================================
-// POS - CLEAR CART
+// CUSTOMER PAID
+// ============================================================
+
+function updateCustomerPaid(
+  value
+) {
+
+  customerPaid =
+    Number(value) || 0;
+
+
+  renderPOS();
+
+
+  setTimeout(
+    () => {
+
+      const input =
+        document.getElementById(
+          "customerPaidInput"
+        );
+
+
+      if (input) {
+
+        input.focus();
+
+        try {
+
+          input.setSelectionRange(
+            input.value.length,
+            input.value.length
+          );
+
+        } catch (e) {}
+
+      }
+
+    },
+    0
+  );
+
+}
+
+
+// ============================================================
+// CLEAR CART
 // ============================================================
 
 function clearPOSCart() {
 
   posCart = [];
 
+  customerPaid = 0;
+
   selectedPaymentMethod =
     "cash";
+
 
   renderPOS();
 
@@ -2692,7 +1995,7 @@ function clearPOSCart() {
 
 
 // ============================================================
-// POS - COMPLETE SALE
+// COMPLETE SALE
 // ============================================================
 
 async function completePOSSale() {
@@ -2702,7 +2005,7 @@ async function completePOSSale() {
   ) {
 
     alert(
-      t("cartEmpty")
+      t("cartEmptyError")
     );
 
     return;
@@ -2714,14 +2017,20 @@ async function completePOSSale() {
     getPOSCartTotal();
 
 
+  const paid =
+    Number(
+      customerPaid
+    ) || 0;
+
+
   if (
-    total <= 0
+    selectedPaymentMethod ===
+    "cash" &&
+    paid < total
   ) {
 
     alert(
-      language === "si"
-        ? "Sale total එක වැරදියි."
-        : "Sale total is invalid."
+      t("paymentNotEnough")
     );
 
     return;
@@ -2729,373 +2038,985 @@ async function completePOSSale() {
   }
 
 
-  // ----------------------------------------------------------
-  // DATABASE TRANSACTION WILL BE CONNECTED NEXT
-  // ----------------------------------------------------------
+  if (!currentUser) {
 
-  alert(
-    t("saleNotConnected")
+    alert(
+      t("loginAgain")
+    );
+
+    return;
+
+  }
+
+
+  const buttons =
+    document.querySelectorAll(
+      ".pos-complete-btn"
+    );
+
+
+  buttons.forEach(
+    button => {
+
+      button.disabled =
+        true;
+
+      button.innerText =
+        t("saving");
+
+    }
   );
 
-}
+
+  try {
+
+    // --------------------------------------------------------
+    // Prepare cart
+    // --------------------------------------------------------
+
+    const saleItems =
+      posCart.map(
+        item => ({
+
+          product_id:
+            item.product_id,
+
+          quantity:
+            Number(
+              item.quantity
+            )
+
+        })
+      );
 
 
-// ============================================================
-// PRODUCTS
-// ============================================================
+    // --------------------------------------------------------
+    // Call Supabase RPC
+    // --------------------------------------------------------
 
-function productsPage() {
+    const {
+      data,
+      error
+    } =
+      await supabase.rpc(
+        "complete_pos_sale",
+        {
 
-  const app =
-    document.getElementById(
-      "app"
+          p_items:
+            saleItems,
+
+          p_payment_method:
+            selectedPaymentMethod,
+
+          p_employee_id:
+            currentUser.id
+
+        }
+      );
+
+
+    if (error) {
+
+      console.error(
+        "Complete sale error:",
+        error
+      );
+
+      throw error;
+
+    }
+
+
+    const saleId =
+      data;
+
+
+    const change =
+      selectedPaymentMethod ===
+      "cash"
+        ? paid - total
+        : 0;
+
+
+    // --------------------------------------------------------
+    // Success
+    // --------------------------------------------------------
+
+    alert(
+
+      t("saleCompleted") +
+
+      "\n\n" +
+
+      t("total") +
+      ": " +
+      money(total) +
+
+      "\n" +
+
+      t("change") +
+      ": " +
+      money(change)
+
     );
 
 
-  if (!app) {
-
-    return;
-
-  }
-
-
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
-
-    show("pos");
-
-    return;
-
-  }
-
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("productsTitle") +
-      '</h2>' +
-
-      '<p>' +
-        t("comingSoon") +
-      '</p>' +
-
-      '<button class="btn" onclick="alert(' +
-      "'Product management will be added next.'" +
-      ')">' +
-
-        '+ ' +
-        t("add") +
-
-      '</button>' +
-
-    '</div>';
-
-}
-
-
-// ============================================================
-// STOCK
-// ============================================================
-
-function stockPage() {
-
-  const app =
-    document.getElementById(
-      "app"
+    console.log(
+      "Sale completed:",
+      saleId
     );
 
 
-  if (!app) {
+    // --------------------------------------------------------
+    // Reset POS
+    // --------------------------------------------------------
 
-    return;
+    posCart = [];
 
-  }
+    customerPaid = 0;
 
+    selectedPaymentMethod =
+      "cash";
 
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
 
-    show("pos");
+    await posPage();
 
-    return;
 
-  }
-
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("stockTitle") +
-      '</h2>' +
-
-      '<p>' +
-        t("comingSoon") +
-      '</p>' +
-
-    '</div>';
-
-}
-
-
-// ============================================================
-// EXPENSES
-// ============================================================
-
-function expensesPage() {
-
-  const app =
-    document.getElementById(
-      "app"
-    );
-
-
-  if (!app) {
-
-    return;
-
-  }
-
-
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
-
-    show("pos");
-
-    return;
-
-  }
-
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("expensesTitle") +
-      '</h2>' +
-
-      '<p>' +
-        t("comingSoon") +
-      '</p>' +
-
-      '<button class="btn" onclick="alert(' +
-      "'Expense management will be added next.'" +
-      ')">' +
-
-        '+ ' +
-        t("add") +
-
-      '</button>' +
-
-    '</div>';
-
-}
-
-
-// ============================================================
-// REPORTS
-// ============================================================
-
-function reportsPage() {
-
-  const app =
-    document.getElementById(
-      "app"
-    );
-
-
-  if (!app) {
-
-    return;
-
-  }
-
-
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
-
-    show("pos");
-
-    return;
-
-  }
-
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("reportsTitle") +
-      '</h2>' +
-
-      '<p>' +
-        t("comingSoon") +
-      '</p>' +
-
-    '</div>';
-
-}
-
-
-// ============================================================
-// EMPLOYEES
-// ============================================================
-
-function employeesPage() {
-
-  const app =
-    document.getElementById(
-      "app"
-    );
-
-
-  if (!app) {
-
-    return;
-
-  }
-
-
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
-
-    show("pos");
-
-    return;
-
-  }
-
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("employeesTitle") +
-      '</h2>' +
-
-      '<p>' +
-        t("comingSoon") +
-      '</p>' +
-
-      '<button class="btn" onclick="alert(' +
-      "'Employee management will be added next.'" +
-      ')">' +
-
-        '+ ' +
-        t("add") +
-
-      '</button>' +
-
-    '</div>';
-
-}
-
-
-// ============================================================
-// SETTINGS
-// ============================================================
-
-function settingsPage() {
-
-  const app =
-    document.getElementById(
-      "app"
-    );
-
-
-  if (!app) {
-
-    return;
-
-  }
-
-
-  if (
-    currentProfile?.role !==
-    "owner"
-  ) {
-
-    show("pos");
-
-    return;
-
-  }
-
-
-  app.innerHTML =
-
-    '<div class="panel">' +
-
-      '<h2>' +
-        t("settingsTitle") +
-      '</h2>' +
-
-      '<div class="setting-row">' +
-
-        '<strong>Language</strong>' +
-
-        '<select onchange="setLang(this.value)">' +
-
-          '<option value="si"' +
-
-          (
-            language === "si"
-              ? " selected"
-              : ""
-          ) +
-
-          '>සිංහල</option>' +
-
-
-          '<option value="en"' +
-
-          (
-            language === "en"
-              ? " selected"
-              : ""
-          ) +
-
-          '>English</option>' +
-
-        '</select>' +
-
-      '</div>' +
-
-    '</div>';
-
-}
-
-
-// ============================================================
-// CHECK EXISTING SESSION
-// ============================================================
-
-async function checkSession() {
-
-  if (!supabaseClient) {
+  } catch (error) {
 
     console.error(
-      "Supabase client not available."
+      "SALE ERROR:",
+      error
     );
 
 
-    showLogin();
+    alert(
+
+      t("saleFailed") +
+
+      "\n\n" +
+
+      error.message
+
+    );
+
+
+    renderPOS();
+
+  }
+
+}
+
+
+// ============================================================
+// PRODUCTS PAGE
+// ============================================================
+
+async function productsPage() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) return;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabase
+      .from("products")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading products.
+      </div>
+    `;
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  app.innerHTML = `
+
+    <div class="card">
+
+      <h2>
+        ${t("productsTitle")}
+      </h2>
+
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Name
+              </th>
+
+              <th>
+                Price
+              </th>
+
+              <th>
+                Active
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${
+              (data || [])
+                .map(
+                  product => `
+
+                    <tr>
+
+                      <td>
+                        ${escapeHTML(
+                          product.name_si ||
+                          product.name_en ||
+                          "-"
+                        )}
+                      </td>
+
+                      <td>
+                        ${money(
+                          product.selling_price
+                        )}
+                      </td>
+
+                      <td>
+                        ${
+                          product.active
+                            ? "Yes"
+                            : "No"
+                        }
+                      </td>
+
+                    </tr>
+
+                  `
+                )
+                .join("")
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// STOCK PAGE
+// ============================================================
+
+async function stockPage() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) return;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabase
+      .from("ingredients")
+      .select("*")
+      .order(
+        "name",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (error) {
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading stock.
+      </div>
+    `;
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  app.innerHTML = `
+
+    <div class="card">
+
+      <h2>
+        ${t("stockTitle")}
+      </h2>
+
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Ingredient
+              </th>
+
+              <th>
+                Unit
+              </th>
+
+              <th>
+                Current Stock
+              </th>
+
+              <th>
+                Minimum
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${
+              (data || [])
+                .map(
+                  item => `
+
+                    <tr>
+
+                      <td>
+                        ${escapeHTML(
+                          item.name
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          item.unit || "-"
+                        )}
+                      </td>
+
+                      <td>
+                        ${Number(
+                          item.current_stock || 0
+                        )}
+                      </td>
+
+                      <td>
+                        ${Number(
+                          item.min_stock || 0
+                        )}
+                      </td>
+
+                    </tr>
+
+                  `
+                )
+                .join("")
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// EXPENSES PAGE
+// ============================================================
+
+async function expensesPage() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) return;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabase
+      .from("expenses")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      )
+      .limit(50);
+
+
+  if (error) {
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading expenses.
+      </div>
+    `;
+
+    console.error(error);
+
+    return;
+
+  }
+
+
+  app.innerHTML = `
+
+    <div class="card">
+
+      <h2>
+        ${t("expensesTitle")}
+      </h2>
+
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Date
+              </th>
+
+              <th>
+                Description
+              </th>
+
+              <th>
+                Amount
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${
+              (data || [])
+                .map(
+                  item => `
+
+                    <tr>
+
+                      <td>
+                        ${formatDate(
+                          item.created_at
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          item.description ||
+                          item.name ||
+                          "-"
+                        )}
+                      </td>
+
+                      <td>
+                        ${money(
+                          item.amount
+                        )}
+                      </td>
+
+                    </tr>
+
+                  `
+                )
+                .join("")
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// REPORTS PAGE
+// ============================================================
+
+async function reportsPage() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) return;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabase
+      .from("sales")
+      .select(
+        "id,total,payment_method,created_at"
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.error(error);
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading reports.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  const sales =
+    data || [];
+
+
+  const total =
+    sales.reduce(
+      (sum, sale) =>
+        sum +
+        Number(
+          sale.total || 0
+        ),
+      0
+    );
+
+
+  app.innerHTML = `
+
+    <div class="dashboard-grid">
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          ${t("totalSales")}
+        </div>
+
+        <div class="stat-value">
+          ${money(total)}
+        </div>
+
+      </div>
+
+
+      <div class="stat-card">
+
+        <div class="stat-title">
+          ${t("totalOrders")}
+        </div>
+
+        <div class="stat-value">
+          ${sales.length}
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>
+        ${t("reportsTitle")}
+      </h2>
+
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Date
+              </th>
+
+              <th>
+                Payment
+              </th>
+
+              <th>
+                Total
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${
+              sales
+                .map(
+                  sale => `
+
+                    <tr>
+
+                      <td>
+                        ${formatDate(
+                          sale.created_at
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          sale.payment_method
+                        )}
+                      </td>
+
+                      <td>
+                        ${money(
+                          sale.total
+                        )}
+                      </td>
+
+                    </tr>
+
+                  `
+                )
+                .join("")
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// EMPLOYEES PAGE
+// ============================================================
+
+async function employeesPage() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) return;
+
+
+  if (
+    !currentProfile ||
+    currentProfile.role !== "owner"
+  ) {
+
+    app.innerHTML = `
+      <div class="card">
+        Access denied.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  const {
+    data,
+    error
+  } =
+    await supabase
+      .from("profiles")
+      .select(
+        "id, username, full_name, role, language"
+      )
+      .order(
+        "full_name",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (error) {
+
+    console.error(error);
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading employees.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  app.innerHTML = `
+
+    <div class="card">
+
+      <h2>
+        ${t("employeesTitle")}
+      </h2>
+
+
+      <div class="table-wrap">
+
+        <table>
+
+          <thead>
+
+            <tr>
+
+              <th>
+                Username
+              </th>
+
+              <th>
+                Name
+              </th>
+
+              <th>
+                Role
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+            ${
+              (data || [])
+                .map(
+                  person => `
+
+                    <tr>
+
+                      <td>
+                        ${escapeHTML(
+                          person.username
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          person.full_name
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
+                          person.role
+                        )}
+                      </td>
+
+                    </tr>
+
+                  `
+                )
+                .join("")
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// SETTINGS PAGE
+// ============================================================
+
+async function settingsPage() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) return;
+
+
+  app.innerHTML = `
+
+    <div class="card">
+
+      <h2>
+        ${t("settingsTitle")}
+      </h2>
+
+
+      <p>
+        ${t("language")}
+      </p>
+
+
+      <div class="payment-buttons">
+
+        <button
+          class="${
+            language === "si"
+              ? "payment-active"
+              : ""
+          }"
+          onclick="setLang('si')"
+        >
+          සිංහල
+        </button>
+
+
+        <button
+          class="${
+            language === "en"
+              ? "payment-active"
+              : ""
+          }"
+          onclick="setLang('en')"
+        >
+          English
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================================
+// FORGOT PASSWORD
+// ============================================================
+
+async function forgotPassword() {
+
+  const usernameInput =
+    document.getElementById(
+      "loginUsername"
+    );
+
+
+  const message =
+    document.getElementById(
+      "loginMessage"
+    );
+
+
+  const username =
+    usernameInput
+      ? usernameInput.value.trim()
+      : "";
+
+
+  if (!username) {
+
+    if (message) {
+
+      message.textContent =
+        language === "en"
+          ? "Enter your username first."
+          : "මුලින් Username එක ඇතුළත් කරන්න.";
+
+    }
 
     return;
 
@@ -3104,56 +3025,125 @@ async function checkSession() {
 
   try {
 
-    const result =
-      await supabaseClient.auth
-        .getSession();
-
-
-    if (result.error) {
-
-      console.error(
-        "Session error:",
-        result.error
+    const {
+      data,
+      error
+    } =
+      await supabase.rpc(
+        "get_login_email",
+        {
+          p_username:
+            username
+        }
       );
 
 
-      showLogin();
+    if (error) {
 
-      return;
-
-    }
-
-
-    const session =
-      result.data.session;
-
-
-    if (!session) {
-
-      showLogin();
-
-      return;
+      throw error;
 
     }
 
 
-    currentUser =
-      session.user;
+    const email =
+      data;
 
+
+    if (!email) {
+
+      throw new Error(
+        "Username not found"
+      );
+
+    }
+
+
+    const {
+      error:
+        resetError
+    } =
+      await supabase.auth
+        .resetPasswordForEmail(
+          email,
+          {
+            redirectTo:
+              window.location.origin
+          }
+        );
+
+
+    if (resetError) {
+
+      throw resetError;
+
+    }
+
+
+    alert(
+      language === "en"
+        ? "Password reset email sent."
+        : "Password reset email එක යැව්වා."
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Password reset error:",
+      error
+    );
+
+
+    if (message) {
+
+      message.textContent =
+        language === "en"
+          ? "Password reset failed."
+          : "Password reset කරන්න බැරි වුණා.";
+
+    }
+
+  }
+
+}
+
+
+// ============================================================
+// SESSION CHECK
+// ============================================================
+
+async function checkSession() {
+
+  const {
+    data
+  } =
+    await supabase.auth.getSession();
+
+
+  const session =
+    data.session;
+
+
+  if (!session) {
+
+    currentUser = null;
+
+    currentProfile = null;
+
+    showLogin();
+
+    return;
+
+  }
+
+
+  currentUser =
+    session.user;
+
+
+  try {
 
     await loadProfile();
-
-
-    if (!currentProfile) {
-
-      await supabaseClient.auth.signOut();
-
-      showLogin();
-
-      return;
-
-    }
-
 
     showApp();
 
@@ -3162,27 +3152,26 @@ async function checkSession() {
     updateHeader();
 
 
-    if (
-      currentProfile.role ===
-      "employee"
-    ) {
-
-      show("pos");
-
-    } else {
-
-      show("dashboard");
-
-    }
+    await show(
+      currentProfile &&
+      currentProfile.role === "employee"
+        ? "pos"
+        : "dashboard"
+    );
 
 
   } catch (error) {
 
     console.error(
-      "Session check error:",
+      "Session profile error:",
       error
     );
 
+    await supabase.auth.signOut();
+
+    currentUser = null;
+
+    currentProfile = null;
 
     showLogin();
 
@@ -3195,87 +3184,64 @@ async function checkSession() {
 // AUTH STATE LISTENER
 // ============================================================
 
-function setupAuthListener() {
+supabase.auth.onAuthStateChange(
+  async (
+    event,
+    session
+  ) => {
 
-  if (!supabaseClient) {
+    if (
+      event === "SIGNED_OUT"
+    ) {
 
-    return;
+      currentUser = null;
 
-  }
+      currentProfile = null;
 
+      showLogin();
 
-  supabaseClient.auth.onAuthStateChange(
-    function(event, session) {
-
-      console.log(
-        "Auth event:",
-        event
-      );
-
-
-      if (
-        event ===
-        "SIGNED_OUT"
-      ) {
-
-        currentUser = null;
-
-        currentProfile = null;
-
-        posCart = [];
-
-        posProducts = [];
-
-        showLogin();
-
-        return;
-
-      }
-
-
-      if (
-        event ===
-        "SIGNED_IN" &&
-        session
-      ) {
-
-        currentUser =
-          session.user;
-
-      }
+      return;
 
     }
-  );
-
-}
 
 
-// ============================================================
-// ENTER KEY LOGIN
-// ============================================================
+    if (
+      event === "SIGNED_IN" &&
+      session
+    ) {
 
-function setupLoginKeyboard() {
+      currentUser =
+        session.user;
 
-  const password =
-    document.getElementById(
-      "loginPassword"
-    );
-
-
-  if (!password) {
-
-    return;
+    }
 
   }
+);
 
 
-  password.addEventListener(
-    "keydown",
-    function(event) {
+// ============================================================
+// LOGIN ENTER KEY
+// ============================================================
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      const loginScreen =
+        document.getElementById(
+          "loginScreen"
+        );
+
 
       if (
-        event.key ===
-        "Enter"
+        loginScreen &&
+        !loginScreen.classList.contains(
+          "app-hidden"
+        )
       ) {
 
         loginUser();
@@ -3283,42 +3249,102 @@ function setupLoginKeyboard() {
       }
 
     }
-  );
 
-}
+  }
+);
 
 
 // ============================================================
-// INITIALIZE
+// NAVIGATION BUTTONS
+// ============================================================
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "[data-page]"
+      );
+
+
+    if (!button) return;
+
+
+    const page =
+      button.dataset.page;
+
+
+    if (page) {
+
+      show(page);
+
+    }
+
+  }
+);
+
+
+// ============================================================
+// DOM READY
 // ============================================================
 
 document.addEventListener(
   "DOMContentLoaded",
-  async function() {
+  async () => {
 
-    console.log(
-      "අඹ සිසිල Management System starting..."
-    );
-
-
-    const languageSelect =
+    // Login button
+    const loginButton =
       document.getElementById(
-        "lang"
+        "loginButton"
       );
 
 
-    if (languageSelect) {
+    if (loginButton) {
 
-      languageSelect.value =
-        language;
+      loginButton.addEventListener(
+        "click",
+        loginUser
+      );
 
     }
 
 
-    setupLoginKeyboard();
+    // Logout button
+    const logoutButton =
+      document.getElementById(
+        "logoutButton"
+      );
 
-    setupAuthListener();
 
+    if (logoutButton) {
+
+      logoutButton.addEventListener(
+        "click",
+        logoutUser
+      );
+
+    }
+
+
+    // Forgot password
+    const forgotButton =
+      document.getElementById(
+        "forgotPasswordButton"
+      );
+
+
+    if (forgotButton) {
+
+      forgotButton.addEventListener(
+        "click",
+        forgotPassword
+      );
+
+    }
+
+
+    // Check existing session
     await checkSession();
 
   }
@@ -3332,11 +3358,11 @@ document.addEventListener(
 window.loginUser =
   loginUser;
 
-window.forgotPassword =
-  forgotPassword;
-
 window.logoutUser =
   logoutUser;
+
+window.forgotPassword =
+  forgotPassword;
 
 window.show =
   show;
@@ -3344,32 +3370,11 @@ window.show =
 window.setLang =
   setLang;
 
-window.dashboard =
-  dashboard;
-
 window.posPage =
   posPage;
 
-window.productsPage =
-  productsPage;
-
-window.stockPage =
-  stockPage;
-
-window.expensesPage =
-  expensesPage;
-
-window.reportsPage =
-  reportsPage;
-
-window.employeesPage =
-  employeesPage;
-
-window.settingsPage =
-  settingsPage;
-
-
-// POS GLOBAL FUNCTIONS
+window.renderPOS =
+  renderPOS;
 
 window.addToPOSCart =
   addToPOSCart;
@@ -3383,8 +3388,13 @@ window.removePOSItem =
 window.selectPOSPayment =
   selectPOSPayment;
 
+window.updateCustomerPaid =
+  updateCustomerPaid;
+
 window.clearPOSCart =
   clearPOSCart;
 
 window.completePOSSale =
   completePOSSale;
+
+
