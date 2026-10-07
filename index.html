@@ -1,1 +1,91 @@
-<!doctype html><html lang="si"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>අඹ සිසිල Management</title><link rel="stylesheet" href="style.css"></head><body><aside><div class="brand">🥭 <b>අඹ සිසිල</b><small>Management System</small></div><nav><button onclick="show('dashboard')">📊 Dashboard</button><button onclick="show('pos')">🧾 POS / Sales</button><button onclick="show('products')">🍲 Products</button><button onclick="show('stock')">📦 Stock</button><button onclick="show('expenses')">💰 Expenses</button><button onclick="show('reports')">📈 Reports</button><button onclick="show('employees')">👥 Employees</button><button onclick="show('settings')">⚙️ Settings</button></nav></aside><main><header><button class="hamb" onclick="document.querySelector('aside').classList.toggle('open')">☰</button><div><h1 id="title">Dashboard</h1><small id="date"></small></div><select id="lang" onchange="setLang(this.value)"><option value="si">සිංහල</option><option value="en">English</option></select></header><section id="app"></section></main><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="si">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>අඹ සිසිල Management</title>
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+  <!-- LOGIN -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-box">
+      <div class="brand login-brand">
+        🥭
+        <h1>අඹ සිසිල</h1>
+        <small>Management System</small>
+      </div>
+
+      <div class="field">
+        <label>Username</label>
+        <input id="loginUsername" type="text" autocomplete="username">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input id="loginPassword" type="password" autocomplete="current-password">
+      </div>
+
+      <button class="btn login-btn" onclick="loginUser()">LOGIN</button>
+
+      <button class="forgot-btn" onclick="forgotPassword()">
+        Forgot Password?
+      </button>
+
+      <div id="loginMessage" class="login-message"></div>
+    </div>
+  </div>
+
+  <!-- MAIN APP -->
+  <div id="mainApp" class="app-hidden">
+
+    <aside>
+      <div class="brand">
+        🥭 <b>අඹ සිසිල</b>
+        <small>Management System</small>
+      </div>
+
+      <nav>
+        <button onclick="show('dashboard')">📊 Dashboard</button>
+        <button onclick="show('pos')">🧾 POS / Sales</button>
+        <button onclick="show('products')">🍲 Products</button>
+        <button onclick="show('stock')">📦 Stock</button>
+        <button onclick="show('expenses')">💰 Expenses</button>
+        <button onclick="show('reports')">📈 Reports</button>
+        <button id="employeesMenu" onclick="show('employees')">👥 Employees</button>
+        <button onclick="show('settings')">⚙️ Settings</button>
+        <button onclick="logoutUser()">🚪 Logout</button>
+      </nav>
+    </aside>
+
+    <main>
+      <header>
+        <button class="hamb" onclick="document.querySelector('aside').classList.toggle('open')">☰</button>
+
+        <div>
+          <h1 id="title">Dashboard</h1>
+          <small id="date"></small>
+        </div>
+
+        <div class="user-area">
+          <span id="currentUser"></span>
+
+          <select id="lang" onchange="setLang(this.value)">
+            <option value="si">සිංහල</option>
+            <option value="en">English</option>
+          </select>
+        </div>
+      </header>
+
+      <section id="app"></section>
+    </main>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
