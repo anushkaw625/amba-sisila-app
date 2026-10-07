@@ -2,6 +2,7 @@
 // අඹ සිසිල Management System
 // Supabase Authentication + Role Based UI
 // Dashboard + Employee POS Only
+// FULL POS VERSION
 // ============================================================
 
 
@@ -26,13 +27,19 @@ if (
   window.supabase &&
   window.supabase.createClient
 ) {
+
   supabaseClient =
     window.supabase.createClient(
       SUPABASE_URL,
       SUPABASE_PUBLISHABLE_KEY
     );
+
 } else {
-  console.error("Supabase library not loaded.");
+
+  console.error(
+    "Supabase library not loaded."
+  );
+
 }
 
 
@@ -46,6 +53,17 @@ let currentPage = "dashboard";
 
 let language =
   localStorage.getItem("amba_lang") || "si";
+
+
+// ============================================================
+// POS GLOBAL VARIABLES
+// ============================================================
+
+let posProducts = [];
+
+let posCart = [];
+
+let selectedPaymentMethod = "cash";
 
 
 // ============================================================
@@ -104,9 +122,30 @@ const translations = {
     loading: "පූරණය වෙමින්...",
     today: "අද",
     noSales: "අද විකුණුම් නොමැත",
-    accessDenied: "මෙම කොටස Owner සඳහා පමණි."
+    accessDenied: "මෙම කොටස Owner සඳහා පමණි.",
+
+    payment: "ගෙවීම",
+
+    productsEmpty:
+      "Products තාම එකතු කරලා නැහැ.",
+
+    cartEmpty:
+      "Cart එක හිස්.",
+
+    completeSale:
+      "විකිණීම සම්පූර්ණ කරන්න",
+
+    clearCart:
+      "Cart එක හිස් කරන්න",
+
+    paymentMethod:
+      "ගෙවීම් ක්‍රමය",
+
+    saleNotConnected:
+      "Sale save කිරීම ඊළඟ පියවරේදී connect කරමු."
 
   },
+
 
   en: {
 
@@ -158,7 +197,27 @@ const translations = {
     loading: "Loading...",
     today: "Today",
     noSales: "No sales today",
-    accessDenied: "This section is for Owner only."
+    accessDenied: "This section is for Owner only.",
+
+    payment: "Payment",
+
+    productsEmpty:
+      "No products have been added yet.",
+
+    cartEmpty:
+      "Cart is empty.",
+
+    completeSale:
+      "Complete Sale",
+
+    clearCart:
+      "Clear Cart",
+
+    paymentMethod:
+      "Payment Method",
+
+    saleNotConnected:
+      "Sale saving will be connected in the next step."
 
   }
 
@@ -175,10 +234,13 @@ function t(key) {
     translations[language] &&
     translations[language][key]
   ) {
+
     return translations[language][key];
+
   }
 
   return key;
+
 }
 
 
@@ -199,6 +261,7 @@ function money(value) {
         maximumFractionDigits: 2
       }
     );
+
 }
 
 
@@ -210,9 +273,15 @@ function getTodayStart() {
 
   const date = new Date();
 
-  date.setHours(0, 0, 0, 0);
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
 
   return date;
+
 }
 
 
@@ -220,13 +289,19 @@ function getTomorrowStart() {
 
   const date = new Date();
 
-  date.setHours(0, 0, 0, 0);
+  date.setHours(
+    0,
+    0,
+    0,
+    0
+  );
 
   date.setDate(
     date.getDate() + 1
   );
 
   return date;
+
 }
 
 
@@ -240,12 +315,14 @@ function getRecordDate(record) {
     record.sold_at ||
     null
   );
+
 }
 
 
 function getRecordAmount(record) {
 
   const possibleFields = [
+
     "total_amount",
     "total",
     "grand_total",
@@ -253,9 +330,13 @@ function getRecordAmount(record) {
     "sale_total",
     "net_total",
     "total_price"
+
   ];
 
-  for (const field of possibleFields) {
+
+  for (
+    const field of possibleFields
+  ) {
 
     if (
       record[field] !== undefined &&
@@ -265,15 +346,22 @@ function getRecordAmount(record) {
       const value =
         Number(record[field]);
 
-      if (!Number.isNaN(value)) {
+
+      if (
+        !Number.isNaN(value)
+      ) {
+
         return value;
+
       }
 
     }
 
   }
 
+
   return 0;
+
 }
 
 
@@ -286,6 +374,7 @@ function getRecordPayment(record) {
     "";
 
   return String(value);
+
 }
 
 
@@ -300,10 +389,12 @@ function showLogin() {
       "loginScreen"
     );
 
+
   const mainApp =
     document.getElementById(
       "mainApp"
     );
+
 
   if (loginScreen) {
 
@@ -312,6 +403,7 @@ function showLogin() {
     );
 
   }
+
 
   if (mainApp) {
 
@@ -335,10 +427,12 @@ function showApp() {
       "loginScreen"
     );
 
+
   const mainApp =
     document.getElementById(
       "mainApp"
     );
+
 
   if (loginScreen) {
 
@@ -347,6 +441,7 @@ function showApp() {
     );
 
   }
+
 
   if (mainApp) {
 
@@ -370,32 +465,43 @@ async function loginUser() {
       "loginUsername"
     );
 
+
   const passwordInput =
     document.getElementById(
       "loginPassword"
     );
+
 
   const message =
     document.getElementById(
       "loginMessage"
     );
 
+
   if (
     !usernameInput ||
     !passwordInput
   ) {
+
     return;
+
   }
+
 
   const username =
     usernameInput.value.trim();
 
+
   const password =
     passwordInput.value;
 
+
   if (message) {
+
     message.textContent = "";
+
   }
+
 
   if (
     !username ||
@@ -410,7 +516,9 @@ async function loginUser() {
     }
 
     return;
+
   }
+
 
   if (!supabaseClient) {
 
@@ -422,7 +530,9 @@ async function loginUser() {
     }
 
     return;
+
   }
+
 
   try {
 
@@ -452,6 +562,7 @@ async function loginUser() {
         rpcResult.error
       );
 
+
       if (message) {
 
         message.textContent =
@@ -460,6 +571,7 @@ async function loginUser() {
       }
 
       return;
+
     }
 
 
@@ -477,6 +589,7 @@ async function loginUser() {
       }
 
       return;
+
     }
 
 
@@ -499,6 +612,7 @@ async function loginUser() {
         loginResult.error
       );
 
+
       if (message) {
 
         message.textContent =
@@ -507,6 +621,7 @@ async function loginUser() {
       }
 
       return;
+
     }
 
 
@@ -528,9 +643,11 @@ async function loginUser() {
 
       }
 
+
       await supabaseClient.auth.signOut();
 
       return;
+
     }
 
 
@@ -542,8 +659,10 @@ async function loginUser() {
 
 
     // Employee → POS directly
+
     if (
-      currentProfile.role === "employee"
+      currentProfile.role ===
+      "employee"
     ) {
 
       show("pos");
@@ -561,6 +680,7 @@ async function loginUser() {
       "Login exception:",
       error
     );
+
 
     if (message) {
 
@@ -584,8 +704,11 @@ async function loadProfile() {
     !supabaseClient ||
     !currentUser
   ) {
+
     return null;
+
   }
+
 
   const result =
     await supabaseClient
@@ -605,9 +728,11 @@ async function loadProfile() {
       result.error
     );
 
+
     currentProfile = null;
 
     return null;
+
   }
 
 
@@ -615,10 +740,13 @@ async function loadProfile() {
     result.data;
 
 
-  if (currentProfile.language) {
+  if (
+    currentProfile.language
+  ) {
 
     language =
       currentProfile.language;
+
 
     localStorage.setItem(
       "amba_lang",
@@ -644,14 +772,19 @@ async function forgotPassword() {
       "loginUsername"
     );
 
+
   const message =
     document.getElementById(
       "loginMessage"
     );
 
+
   if (!usernameInput) {
+
     return;
+
   }
+
 
   const username =
     usernameInput.value.trim();
@@ -667,11 +800,14 @@ async function forgotPassword() {
     }
 
     return;
+
   }
 
 
   if (!supabaseClient) {
+
     return;
+
   }
 
 
@@ -701,6 +837,7 @@ async function forgotPassword() {
         rpcResult.error
       );
 
+
       if (message) {
 
         message.textContent =
@@ -709,6 +846,7 @@ async function forgotPassword() {
       }
 
       return;
+
     }
 
 
@@ -726,6 +864,7 @@ async function forgotPassword() {
       }
 
       return;
+
     }
 
 
@@ -747,6 +886,7 @@ async function forgotPassword() {
         resetResult.error
       );
 
+
       if (message) {
 
         message.textContent =
@@ -755,6 +895,7 @@ async function forgotPassword() {
       }
 
       return;
+
     }
 
 
@@ -772,6 +913,7 @@ async function forgotPassword() {
       "Forgot password exception:",
       error
     );
+
 
     if (message) {
 
@@ -792,8 +934,11 @@ async function forgotPassword() {
 async function logoutUser() {
 
   if (!supabaseClient) {
+
     return;
+
   }
+
 
   try {
 
@@ -813,6 +958,13 @@ async function logoutUser() {
 
   currentProfile = null;
 
+  posCart = [];
+
+  posProducts = [];
+
+  selectedPaymentMethod =
+    "cash";
+
 
   showLogin();
 
@@ -822,10 +974,12 @@ async function logoutUser() {
       "loginUsername"
     );
 
+
   const password =
     document.getElementById(
       "loginPassword"
     );
+
 
   const message =
     document.getElementById(
@@ -834,15 +988,23 @@ async function logoutUser() {
 
 
   if (username) {
+
     username.value = "";
+
   }
+
 
   if (password) {
+
     password.value = "";
+
   }
 
+
   if (message) {
+
     message.textContent = "";
+
   }
 
 }
@@ -873,7 +1035,9 @@ function applyRolePermissions() {
 
   // Owner
 
-  if (role === "owner") {
+  if (
+    role === "owner"
+  ) {
 
     if (employeesMenu) {
 
@@ -881,6 +1045,7 @@ function applyRolePermissions() {
         "";
 
     }
+
 
     navButtons.forEach(
       function(button) {
@@ -891,7 +1056,9 @@ function applyRolePermissions() {
       }
     );
 
+
     return;
+
   }
 
 
@@ -903,10 +1070,6 @@ function applyRolePermissions() {
       "none";
 
   }
-
-
-  const allowedPage =
-    "pos";
 
 
   navButtons.forEach(
@@ -954,10 +1117,12 @@ function updateHeader() {
       "currentUser"
     );
 
+
   const dateElement =
     document.getElementById(
       "date"
     );
+
 
   const languageSelect =
     document.getElementById(
@@ -972,9 +1137,13 @@ function updateHeader() {
       currentUser?.email ||
       "";
 
+
     const role =
-      currentProfile?.role === "owner"
+      currentProfile?.role ===
+      "owner"
+
         ? t("owner")
+
         : t("employee");
 
 
@@ -1064,8 +1233,6 @@ async function setLang(value) {
   updateHeader();
 
 
-  // Employee always remains in POS
-
   if (
     currentProfile?.role ===
     "employee"
@@ -1122,14 +1289,29 @@ function show(pageName) {
 
     const titles = {
 
-      dashboard: t("dashboard"),
-      pos: t("pos"),
-      products: t("products"),
-      stock: t("stock"),
-      expenses: t("expenses"),
-      reports: t("reports"),
-      employees: t("employees"),
-      settings: t("settings")
+      dashboard:
+        t("dashboard"),
+
+      pos:
+        t("pos"),
+
+      products:
+        t("products"),
+
+      stock:
+        t("stock"),
+
+      expenses:
+        t("expenses"),
+
+      reports:
+        t("reports"),
+
+      employees:
+        t("employees"),
+
+      settings:
+        t("settings")
 
     };
 
@@ -1148,6 +1330,7 @@ function show(pageName) {
       "aside"
     );
 
+
   if (sidebar) {
 
     sidebar.classList.remove(
@@ -1160,38 +1343,63 @@ function show(pageName) {
   switch (pageName) {
 
     case "dashboard":
+
       dashboard();
+
       break;
+
 
     case "pos":
+
       posPage();
+
       break;
+
 
     case "products":
+
       productsPage();
+
       break;
+
 
     case "stock":
+
       stockPage();
+
       break;
+
 
     case "expenses":
+
       expensesPage();
+
       break;
+
 
     case "reports":
+
       reportsPage();
+
       break;
+
 
     case "employees":
+
       employeesPage();
+
       break;
+
 
     case "settings":
+
       settingsPage();
+
       break;
 
+
     default:
+
       dashboard();
 
   }
@@ -1210,8 +1418,11 @@ async function dashboard() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -1247,12 +1458,14 @@ async function dashboard() {
 
 
   let sales = [];
+
   let products = [];
+
   let expenses = [];
 
 
   // ----------------------------------------------------------
-  // Load SALES
+  // LOAD DATA
   // ----------------------------------------------------------
 
   if (supabaseClient) {
@@ -1288,10 +1501,6 @@ async function dashboard() {
     }
 
 
-    // --------------------------------------------------------
-    // Load PRODUCTS
-    // --------------------------------------------------------
-
     const productsResult =
       await supabaseClient
         .from("products")
@@ -1316,10 +1525,6 @@ async function dashboard() {
 
     }
 
-
-    // --------------------------------------------------------
-    // Load EXPENSES
-    // --------------------------------------------------------
 
     const expensesResult =
       await supabaseClient
@@ -1355,6 +1560,7 @@ async function dashboard() {
   const todayStart =
     getTodayStart();
 
+
   const tomorrowStart =
     getTomorrowStart();
 
@@ -1366,12 +1572,17 @@ async function dashboard() {
         const dateValue =
           getRecordDate(record);
 
+
         if (!dateValue) {
+
           return false;
+
         }
+
 
         const date =
           new Date(dateValue);
+
 
         return (
           date >= todayStart &&
@@ -1389,12 +1600,17 @@ async function dashboard() {
         const dateValue =
           getRecordDate(record);
 
+
         if (!dateValue) {
+
           return false;
+
         }
+
 
         const date =
           new Date(dateValue);
+
 
         return (
           date >= todayStart &&
@@ -1443,9 +1659,6 @@ async function dashboard() {
 
   // ----------------------------------------------------------
   // TEMP PROFIT
-  //
-  // Real product/ingredient cost will be connected
-  // after Recipes + Stock are completed.
   // ----------------------------------------------------------
 
   const estimatedProfit =
@@ -1470,6 +1683,7 @@ async function dashboard() {
             0
           );
 
+
         const minimum =
           Number(
             product.min_stock ??
@@ -1483,7 +1697,9 @@ async function dashboard() {
           minimum > 0 &&
           qty <= minimum
         ) {
+
           return true;
+
         }
 
 
@@ -1526,6 +1742,7 @@ async function dashboard() {
   } else {
 
     recentHTML =
+
       '<div style="overflow-x:auto;">' +
 
         '<table class="table">' +
@@ -1559,8 +1776,10 @@ async function dashboard() {
         const dateValue =
           getRecordDate(record);
 
+
         const amount =
           getRecordAmount(record);
+
 
         const payment =
           getRecordPayment(record);
@@ -1575,14 +1794,18 @@ async function dashboard() {
           const date =
             new Date(dateValue);
 
+
           dateText =
             date.toLocaleString(
               language === "si"
                 ? "si-LK"
                 : "en-LK",
               {
-                dateStyle: "short",
-                timeStyle: "short"
+                dateStyle:
+                  "short",
+
+                timeStyle:
+                  "short"
               }
             );
 
@@ -1633,8 +1856,6 @@ async function dashboard() {
 
     '<div class="cards">' +
 
-      // Sales
-
       '<div class="card">' +
 
         '<small>' +
@@ -1647,8 +1868,6 @@ async function dashboard() {
 
       '</div>' +
 
-
-      // Orders
 
       '<div class="card">' +
 
@@ -1663,8 +1882,6 @@ async function dashboard() {
       '</div>' +
 
 
-      // Profit
-
       '<div class="card">' +
 
         '<small>' +
@@ -1677,8 +1894,6 @@ async function dashboard() {
 
       '</div>' +
 
-
-      // Low Stock
 
       '<div class="card">' +
 
@@ -1697,9 +1912,6 @@ async function dashboard() {
 
     '<div class="grid">' +
 
-
-      // Recent Sales
-
       '<div class="panel">' +
 
         '<h2>' +
@@ -1710,8 +1922,6 @@ async function dashboard() {
 
       '</div>' +
 
-
-      // Summary
 
       '<div class="panel">' +
 
@@ -1749,27 +1959,76 @@ async function dashboard() {
 
       '</div>' +
 
-
     '</div>';
 
 }
 
 
 // ============================================================
-// POS
+// POS - LOAD PRODUCTS
 // ============================================================
 
-function posPage() {
+async function loadPOSProducts() {
+
+  if (!supabaseClient) {
+
+    return [];
+
+  }
+
+
+  const result =
+    await supabaseClient
+      .from("products")
+      .select("*")
+      .order(
+        "name",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (result.error) {
+
+    console.error(
+      "POS products error:",
+      result.error
+    );
+
+
+    return [];
+
+  }
+
+
+  return result.data || [];
+
+}
+
+
+// ============================================================
+// POS PAGE
+// ============================================================
+
+async function posPage() {
 
   const app =
     document.getElementById(
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
+
+  // ----------------------------------------------------------
+  // Loading
+  // ----------------------------------------------------------
 
   app.innerHTML =
 
@@ -1780,41 +2039,703 @@ function posPage() {
       '</h2>' +
 
       '<p>' +
-        t("comingSoon") +
+        t("loading") +
       '</p>' +
 
-      '<div class="pos-placeholder">' +
+    '</div>';
 
 
-        '<div class="card">' +
+  // ----------------------------------------------------------
+  // Load products
+  // ----------------------------------------------------------
 
-          '<div class="card-title">' +
-            t("cash") +
-          '</div>' +
+  posProducts =
+    await loadPOSProducts();
 
-          '<div class="card-value">' +
-            money(0) +
-          '</div>' +
+
+  // ----------------------------------------------------------
+  // Render POS
+  // ----------------------------------------------------------
+
+  renderPOS();
+
+}
+
+
+// ============================================================
+// POS - RENDER
+// ============================================================
+
+function renderPOS() {
+
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+
+  if (!app) {
+
+    return;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // PRODUCTS
+  // ----------------------------------------------------------
+
+  let productsHTML = "";
+
+
+  if (
+    posProducts.length === 0
+  ) {
+
+    productsHTML =
+
+      '<div class="empty">' +
+
+        '🍲 ' +
+        t("productsEmpty") +
+
+        '<br><br>' +
+
+        (
+          language === "si"
+            ? "Owner → Products section එකෙන් products add කරන්න."
+            : "Add products from Owner → Products section."
+        ) +
+
+      '</div>';
+
+  } else {
+
+    productsHTML =
+
+      '<div class="pos-product-grid">';
+
+
+    posProducts.forEach(
+      function(product) {
+
+        const price =
+          Number(
+            product.price ??
+            product.selling_price ??
+            product.sale_price ??
+            0
+          );
+
+
+        const name =
+          product.name ||
+          product.product_name ||
+          "Product";
+
+
+        const safeName =
+          String(name)
+            .replace(
+              /'/g,
+              "\\'"
+            )
+            .replace(
+              /"/g,
+              "&quot;"
+            );
+
+
+        productsHTML +=
+
+          '<button ' +
+
+            'class="pos-product" ' +
+
+            'onclick="addToPOSCart(\'' +
+
+              String(product.id) +
+
+            '\')"' +
+
+          '>' +
+
+            '<div class="pos-product-name">' +
+
+              safeName +
+
+            '</div>' +
+
+            '<div class="pos-product-price">' +
+
+              money(price) +
+
+            '</div>' +
+
+          '</button>';
+
+      }
+    );
+
+
+    productsHTML +=
+      '</div>';
+
+  }
+
+
+  // ----------------------------------------------------------
+  // CART
+  // ----------------------------------------------------------
+
+  let cartHTML = "";
+
+
+  if (
+    posCart.length === 0
+  ) {
+
+    cartHTML =
+
+      '<div class="empty">' +
+
+        '🛒 ' +
+        t("cartEmpty") +
+
+      '</div>';
+
+  } else {
+
+    cartHTML =
+
+      '<div class="pos-cart-list">';
+
+
+    posCart.forEach(
+      function(item, index) {
+
+        cartHTML +=
+
+          '<div class="pos-cart-item">' +
+
+            '<div class="pos-cart-info">' +
+
+              '<strong>' +
+                item.name +
+              '</strong>' +
+
+              '<small>' +
+
+                money(item.price) +
+
+                ' × ' +
+
+                item.qty +
+
+              '</small>' +
+
+            '</div>' +
+
+
+            '<div class="pos-cart-controls">' +
+
+              '<button ' +
+
+                'onclick="changePOSQty(' +
+
+                  index +
+
+                  ',-1)"' +
+
+              '>−</button>' +
+
+
+              '<span>' +
+
+                item.qty +
+
+              '</span>' +
+
+
+              '<button ' +
+
+                'onclick="changePOSQty(' +
+
+                  index +
+
+                  ',1)"' +
+
+              '>+</button>' +
+
+
+              '<button ' +
+
+                'class="pos-remove"' +
+
+                'onclick="removePOSItem(' +
+
+                  index +
+
+                ')"' +
+
+              '>×</button>' +
+
+            '</div>' +
+
+
+            '<strong>' +
+
+              money(
+                item.price *
+                item.qty
+              ) +
+
+            '</strong>' +
+
+          '</div>';
+
+      }
+    );
+
+
+    cartHTML +=
+      '</div>';
+
+  }
+
+
+  // ----------------------------------------------------------
+  // TOTAL
+  // ----------------------------------------------------------
+
+  const total =
+    getPOSCartTotal();
+
+
+  // ----------------------------------------------------------
+  // FULL POS
+  // ----------------------------------------------------------
+
+  app.innerHTML =
+
+    '<div class="pos-layout">' +
+
+
+      // ------------------------------------------------------
+      // PRODUCT SIDE
+      // ------------------------------------------------------
+
+      '<div class="panel pos-products-panel">' +
+
+        '<div class="pos-panel-header">' +
+
+          '<h2>🍲 Products</h2>' +
 
         '</div>' +
 
-
-        '<div class="card">' +
-
-          '<div class="card-title">' +
-            t("card") +
-          '</div>' +
-
-          '<div class="card-value">' +
-            money(0) +
-          '</div>' +
-
-        '</div>' +
-
+        productsHTML +
 
       '</div>' +
 
+
+      // ------------------------------------------------------
+      // CART SIDE
+      // ------------------------------------------------------
+
+      '<div class="panel pos-cart-panel">' +
+
+        '<div class="pos-panel-header">' +
+
+          '<h2>🛒 Cart</h2>' +
+
+        '</div>' +
+
+        cartHTML +
+
+
+        '<div class="pos-summary">' +
+
+          '<div class="pos-total-row">' +
+
+            '<span>Total</span>' +
+
+            '<strong>' +
+
+              money(total) +
+
+            '</strong>' +
+
+          '</div>' +
+
+
+          '<div class="payment-title">' +
+
+            t("paymentMethod") +
+
+          '</div>' +
+
+
+          '<div class="payment-buttons">' +
+
+
+            '<button ' +
+
+              'class="' +
+
+              (
+                selectedPaymentMethod ===
+                "cash"
+
+                  ? "payment-active"
+
+                  : ""
+              ) +
+
+              '" ' +
+
+              'onclick="selectPOSPayment(\'cash\')"' +
+
+            '>' +
+
+              '💵 ' +
+              t("cash") +
+
+            '</button>' +
+
+
+            '<button ' +
+
+              'class="' +
+
+              (
+                selectedPaymentMethod ===
+                "card"
+
+                  ? "payment-active"
+
+                  : ""
+              ) +
+
+              '" ' +
+
+              'onclick="selectPOSPayment(\'card\')"' +
+
+            '>' +
+
+              '💳 ' +
+              t("card") +
+
+            '</button>' +
+
+
+          '</div>' +
+
+
+          '<button ' +
+
+            'class="btn pos-complete-btn"' +
+
+            'onclick="completePOSSale()"' +
+
+            (
+              posCart.length === 0
+
+                ? " disabled"
+
+                : ""
+            ) +
+
+          '>' +
+
+            '✅ ' +
+            t("completeSale") +
+
+          '</button>' +
+
+
+          '<button ' +
+
+            'class="btn alt pos-clear-btn"' +
+
+            'onclick="clearPOSCart()"' +
+
+            (
+              posCart.length === 0
+
+                ? " disabled"
+
+                : ""
+            ) +
+
+          '>' +
+
+            '🗑️ ' +
+            t("clearCart") +
+
+          '</button>' +
+
+
+        '</div>' +
+
+      '</div>' +
+
+
     '</div>';
+
+}
+
+
+// ============================================================
+// POS - ADD TO CART
+// ============================================================
+
+function addToPOSCart(productId) {
+
+  const product =
+    posProducts.find(
+      function(item) {
+
+        return (
+          String(item.id) ===
+          String(productId)
+        );
+
+      }
+    );
+
+
+  if (!product) {
+
+    return;
+
+  }
+
+
+  const existing =
+    posCart.find(
+      function(item) {
+
+        return (
+          String(item.id) ===
+          String(product.id)
+        );
+
+      }
+    );
+
+
+  if (existing) {
+
+    existing.qty += 1;
+
+  } else {
+
+    posCart.push({
+
+      id:
+        product.id,
+
+      name:
+        product.name ||
+        product.product_name ||
+        "Product",
+
+      price:
+        Number(
+          product.price ??
+          product.selling_price ??
+          product.sale_price ??
+          0
+        ),
+
+      qty:
+        1
+
+    });
+
+  }
+
+
+  renderPOS();
+
+}
+
+
+// ============================================================
+// POS - CHANGE QUANTITY
+// ============================================================
+
+function changePOSQty(
+  index,
+  amount
+) {
+
+  if (
+    !posCart[index]
+  ) {
+
+    return;
+
+  }
+
+
+  posCart[index].qty +=
+    amount;
+
+
+  if (
+    posCart[index].qty <= 0
+  ) {
+
+    posCart.splice(
+      index,
+      1
+    );
+
+  }
+
+
+  renderPOS();
+
+}
+
+
+// ============================================================
+// POS - REMOVE ITEM
+// ============================================================
+
+function removePOSItem(index) {
+
+  if (
+    !posCart[index]
+  ) {
+
+    return;
+
+  }
+
+
+  posCart.splice(
+    index,
+    1
+  );
+
+
+  renderPOS();
+
+}
+
+
+// ============================================================
+// POS - TOTAL
+// ============================================================
+
+function getPOSCartTotal() {
+
+  return posCart.reduce(
+    function(total, item) {
+
+      return (
+        total +
+        (
+          Number(item.price) *
+          Number(item.qty)
+        )
+      );
+
+    },
+    0
+  );
+
+}
+
+
+// ============================================================
+// POS - PAYMENT METHOD
+// ============================================================
+
+function selectPOSPayment(method) {
+
+  if (
+    method !== "cash" &&
+    method !== "card"
+  ) {
+
+    method = "cash";
+
+  }
+
+
+  selectedPaymentMethod =
+    method;
+
+
+  renderPOS();
+
+}
+
+
+// ============================================================
+// POS - CLEAR CART
+// ============================================================
+
+function clearPOSCart() {
+
+  posCart = [];
+
+  selectedPaymentMethod =
+    "cash";
+
+  renderPOS();
+
+}
+
+
+// ============================================================
+// POS - COMPLETE SALE
+// ============================================================
+
+async function completePOSSale() {
+
+  if (
+    posCart.length === 0
+  ) {
+
+    alert(
+      t("cartEmpty")
+    );
+
+    return;
+
+  }
+
+
+  const total =
+    getPOSCartTotal();
+
+
+  if (
+    total <= 0
+  ) {
+
+    alert(
+      language === "si"
+        ? "Sale total එක වැරදියි."
+        : "Sale total is invalid."
+    );
+
+    return;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // DATABASE TRANSACTION WILL BE CONNECTED NEXT
+  // ----------------------------------------------------------
+
+  alert(
+    t("saleNotConnected")
+  );
 
 }
 
@@ -1830,8 +2751,11 @@ function productsPage() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -1884,8 +2808,11 @@ function stockPage() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -1929,8 +2856,11 @@ function expensesPage() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -1983,8 +2913,11 @@ function reportsPage() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -2028,8 +2961,11 @@ function employeesPage() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -2082,8 +3018,11 @@ function settingsPage() {
       "app"
     );
 
+
   if (!app) {
+
     return;
+
   }
 
 
@@ -2114,19 +3053,24 @@ function settingsPage() {
         '<select onchange="setLang(this.value)">' +
 
           '<option value="si"' +
+
           (
             language === "si"
               ? " selected"
               : ""
           ) +
+
           '>සිංහල</option>' +
 
+
           '<option value="en"' +
+
           (
             language === "en"
               ? " selected"
               : ""
           ) +
+
           '>English</option>' +
 
         '</select>' +
@@ -2150,9 +3094,11 @@ async function checkSession() {
       "Supabase client not available."
     );
 
+
     showLogin();
 
     return;
+
   }
 
 
@@ -2170,9 +3116,11 @@ async function checkSession() {
         result.error
       );
 
+
       showLogin();
 
       return;
+
     }
 
 
@@ -2185,6 +3133,7 @@ async function checkSession() {
       showLogin();
 
       return;
+
     }
 
 
@@ -2202,6 +3151,7 @@ async function checkSession() {
       showLogin();
 
       return;
+
     }
 
 
@@ -2233,6 +3183,7 @@ async function checkSession() {
       error
     );
 
+
     showLogin();
 
   }
@@ -2247,7 +3198,9 @@ async function checkSession() {
 function setupAuthListener() {
 
   if (!supabaseClient) {
+
     return;
+
   }
 
 
@@ -2268,6 +3221,10 @@ function setupAuthListener() {
         currentUser = null;
 
         currentProfile = null;
+
+        posCart = [];
+
+        posProducts = [];
 
         showLogin();
 
@@ -2306,7 +3263,9 @@ function setupLoginKeyboard() {
 
 
   if (!password) {
+
     return;
+
   }
 
 
@@ -2408,3 +3367,24 @@ window.employeesPage =
 
 window.settingsPage =
   settingsPage;
+
+
+// POS GLOBAL FUNCTIONS
+
+window.addToPOSCart =
+  addToPOSCart;
+
+window.changePOSQty =
+  changePOSQty;
+
+window.removePOSItem =
+  removePOSItem;
+
+window.selectPOSPayment =
+  selectPOSPayment;
+
+window.clearPOSCart =
+  clearPOSCart;
+
+window.completePOSSale =
+  completePOSSale;
