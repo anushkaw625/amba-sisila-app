@@ -1,17 +1,19 @@
 // ============================================================
 // අඹ සිසිල Management System
 // Supabase Authentication + Role Based UI
+// Dashboard + Employee POS Only
 // ============================================================
+
 
 // ============================================================
 // SUPABASE CONFIG
 // ============================================================
 
-const SUPABASE_URL = "https://wazmcrsdzehterjkyeqt.supabase.co";
+const SUPABASE_URL =
+  "https://wazmcrsdzehterjkyeqt.supabase.co";
 
-// මෙතන ඔයාගේ Supabase PUBLISHABLE KEY එක දාන්න.
-// Service Role / Secret Key එක දාන්න එපා.
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
 
 
 // ============================================================
@@ -20,17 +22,17 @@ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t
 
 let supabaseClient = null;
 
-if (window.supabase && window.supabase.createClient) {
-
-  supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
-
+if (
+  window.supabase &&
+  window.supabase.createClient
+) {
+  supabaseClient =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
 } else {
-
   console.error("Supabase library not loaded.");
-
 }
 
 
@@ -40,7 +42,6 @@ if (window.supabase && window.supabase.createClient) {
 
 let currentUser = null;
 let currentProfile = null;
-
 let currentPage = "dashboard";
 
 let language =
@@ -48,7 +49,7 @@ let language =
 
 
 // ============================================================
-// LANGUAGE
+// TRANSLATIONS
 // ============================================================
 
 const translations = {
@@ -95,9 +96,15 @@ const translations = {
     employeesTitle: "සේවක කළමනාකරණය",
     settingsTitle: "සැකසුම්",
 
-    comingSoon: "මෙම කොටස ඊළඟ අදියරේදී සම්පූර්ණ කරනු ඇත.",
+    comingSoon:
+      "මෙම කොටස ඊළඟ අදියරේදී සම්පූර්ණ කරනු ඇත.",
 
-    logout: "Logout"
+    logout: "Logout",
+
+    loading: "පූරණය වෙමින්...",
+    today: "අද",
+    noSales: "අද විකුණුම් නොමැත",
+    accessDenied: "මෙම කොටස Owner සඳහා පමණි."
 
   },
 
@@ -143,9 +150,15 @@ const translations = {
     employeesTitle: "Employee Management",
     settingsTitle: "Settings",
 
-    comingSoon: "This section will be completed in the next stage.",
+    comingSoon:
+      "This section will be completed in the next stage.",
 
-    logout: "Logout"
+    logout: "Logout",
+
+    loading: "Loading...",
+    today: "Today",
+    noSales: "No sales today",
+    accessDenied: "This section is for Owner only."
 
   }
 
@@ -153,7 +166,7 @@ const translations = {
 
 
 // ============================================================
-// TRANSLATION FUNCTION
+// TRANSLATION
 // ============================================================
 
 function t(key) {
@@ -162,32 +175,117 @@ function t(key) {
     translations[language] &&
     translations[language][key]
   ) {
-
     return translations[language][key];
-
   }
 
   return key;
-
 }
 
 
 // ============================================================
-// MONEY FORMAT
+// MONEY
 // ============================================================
 
 function money(value) {
 
-  const number = Number(value || 0);
+  const number =
+    Number(value || 0);
 
-  return "Rs. " + number.toLocaleString(
-    "en-LK",
-    {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }
+  return "Rs. " +
+    number.toLocaleString(
+      "en-LK",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    );
+}
+
+
+// ============================================================
+// DATE HELPERS
+// ============================================================
+
+function getTodayStart() {
+
+  const date = new Date();
+
+  date.setHours(0, 0, 0, 0);
+
+  return date;
+}
+
+
+function getTomorrowStart() {
+
+  const date = new Date();
+
+  date.setHours(0, 0, 0, 0);
+
+  date.setDate(
+    date.getDate() + 1
   );
 
+  return date;
+}
+
+
+function getRecordDate(record) {
+
+  return (
+    record.created_at ||
+    record.createdAt ||
+    record.date ||
+    record.sale_date ||
+    record.sold_at ||
+    null
+  );
+}
+
+
+function getRecordAmount(record) {
+
+  const possibleFields = [
+    "total_amount",
+    "total",
+    "grand_total",
+    "amount",
+    "sale_total",
+    "net_total",
+    "total_price"
+  ];
+
+  for (const field of possibleFields) {
+
+    if (
+      record[field] !== undefined &&
+      record[field] !== null
+    ) {
+
+      const value =
+        Number(record[field]);
+
+      if (!Number.isNaN(value)) {
+        return value;
+      }
+
+    }
+
+  }
+
+  return 0;
+}
+
+
+function getRecordPayment(record) {
+
+  const value =
+    record.payment_method ||
+    record.payment_type ||
+    record.method ||
+    "";
+
+  return String(value);
 }
 
 
@@ -198,20 +296,28 @@ function money(value) {
 function showLogin() {
 
   const loginScreen =
-    document.getElementById("loginScreen");
+    document.getElementById(
+      "loginScreen"
+    );
 
   const mainApp =
-    document.getElementById("mainApp");
+    document.getElementById(
+      "mainApp"
+    );
 
   if (loginScreen) {
 
-    loginScreen.classList.remove("app-hidden");
+    loginScreen.classList.remove(
+      "app-hidden"
+    );
 
   }
 
   if (mainApp) {
 
-    mainApp.classList.add("app-hidden");
+    mainApp.classList.add(
+      "app-hidden"
+    );
 
   }
 
@@ -225,20 +331,28 @@ function showLogin() {
 function showApp() {
 
   const loginScreen =
-    document.getElementById("loginScreen");
+    document.getElementById(
+      "loginScreen"
+    );
 
   const mainApp =
-    document.getElementById("mainApp");
+    document.getElementById(
+      "mainApp"
+    );
 
   if (loginScreen) {
 
-    loginScreen.classList.add("app-hidden");
+    loginScreen.classList.add(
+      "app-hidden"
+    );
 
   }
 
   if (mainApp) {
 
-    mainApp.classList.remove("app-hidden");
+    mainApp.classList.remove(
+      "app-hidden"
+    );
 
   }
 
@@ -252,18 +366,25 @@ function showApp() {
 async function loginUser() {
 
   const usernameInput =
-    document.getElementById("loginUsername");
+    document.getElementById(
+      "loginUsername"
+    );
 
   const passwordInput =
-    document.getElementById("loginPassword");
+    document.getElementById(
+      "loginPassword"
+    );
 
   const message =
-    document.getElementById("loginMessage");
+    document.getElementById(
+      "loginMessage"
+    );
 
-  if (!usernameInput || !passwordInput) {
-
+  if (
+    !usernameInput ||
+    !passwordInput
+  ) {
     return;
-
   }
 
   const username =
@@ -273,12 +394,13 @@ async function loginUser() {
     passwordInput.value;
 
   if (message) {
-
     message.textContent = "";
-
   }
 
-  if (!username || !password) {
+  if (
+    !username ||
+    !password
+  ) {
 
     if (message) {
 
@@ -288,7 +410,6 @@ async function loginUser() {
     }
 
     return;
-
   }
 
   if (!supabaseClient) {
@@ -301,7 +422,6 @@ async function loginUser() {
     }
 
     return;
-
   }
 
   try {
@@ -314,9 +434,7 @@ async function loginUser() {
     }
 
 
-    // --------------------------------------------------------
     // Username → Email
-    // --------------------------------------------------------
 
     const rpcResult =
       await supabaseClient.rpc(
@@ -342,7 +460,6 @@ async function loginUser() {
       }
 
       return;
-
     }
 
 
@@ -360,13 +477,10 @@ async function loginUser() {
       }
 
       return;
-
     }
 
 
-    // --------------------------------------------------------
     // Supabase Login
-    // --------------------------------------------------------
 
     const loginResult =
       await supabaseClient.auth.signInWithPassword({
@@ -393,7 +507,6 @@ async function loginUser() {
       }
 
       return;
-
     }
 
 
@@ -401,9 +514,7 @@ async function loginUser() {
       loginResult.data.user;
 
 
-    // --------------------------------------------------------
-    // Load Profile
-    // --------------------------------------------------------
+    // Load profile
 
     await loadProfile();
 
@@ -420,7 +531,6 @@ async function loginUser() {
       await supabaseClient.auth.signOut();
 
       return;
-
     }
 
 
@@ -430,12 +540,27 @@ async function loginUser() {
 
     updateHeader();
 
-    show("dashboard");
+
+    // Employee → POS directly
+    if (
+      currentProfile.role === "employee"
+    ) {
+
+      show("pos");
+
+    } else {
+
+      show("dashboard");
+
+    }
 
 
   } catch (error) {
 
-    console.error("Login exception:", error);
+    console.error(
+      "Login exception:",
+      error
+    );
 
     if (message) {
 
@@ -450,22 +575,26 @@ async function loginUser() {
 
 
 // ============================================================
-// LOAD USER PROFILE
+// LOAD PROFILE
 // ============================================================
 
 async function loadProfile() {
 
-  if (!supabaseClient || !currentUser) {
-
+  if (
+    !supabaseClient ||
+    !currentUser
+  ) {
     return null;
-
   }
 
   const result =
     await supabaseClient
       .from("profiles")
       .select("*")
-      .eq("id", currentUser.id)
+      .eq(
+        "id",
+        currentUser.id
+      )
       .single();
 
 
@@ -479,12 +608,12 @@ async function loadProfile() {
     currentProfile = null;
 
     return null;
-
   }
 
 
   currentProfile =
     result.data;
+
 
   if (currentProfile.language) {
 
@@ -498,6 +627,7 @@ async function loadProfile() {
 
   }
 
+
   return currentProfile;
 
 }
@@ -510,15 +640,17 @@ async function loadProfile() {
 async function forgotPassword() {
 
   const usernameInput =
-    document.getElementById("loginUsername");
+    document.getElementById(
+      "loginUsername"
+    );
 
   const message =
-    document.getElementById("loginMessage");
+    document.getElementById(
+      "loginMessage"
+    );
 
   if (!usernameInput) {
-
     return;
-
   }
 
   const username =
@@ -535,14 +667,11 @@ async function forgotPassword() {
     }
 
     return;
-
   }
 
 
   if (!supabaseClient) {
-
     return;
-
   }
 
 
@@ -580,7 +709,6 @@ async function forgotPassword() {
       }
 
       return;
-
     }
 
 
@@ -598,18 +726,18 @@ async function forgotPassword() {
       }
 
       return;
-
     }
 
 
     const resetResult =
-      await supabaseClient.auth.resetPasswordForEmail(
-        email,
-        {
-          redirectTo:
-            window.location.origin
-        }
-      );
+      await supabaseClient.auth
+        .resetPasswordForEmail(
+          email,
+          {
+            redirectTo:
+              window.location.origin
+          }
+        );
 
 
     if (resetResult.error) {
@@ -627,7 +755,6 @@ async function forgotPassword() {
       }
 
       return;
-
     }
 
 
@@ -665,9 +792,7 @@ async function forgotPassword() {
 async function logoutUser() {
 
   if (!supabaseClient) {
-
     return;
-
   }
 
   try {
@@ -683,38 +808,41 @@ async function logoutUser() {
 
   }
 
+
   currentUser = null;
 
   currentProfile = null;
 
+
   showLogin();
 
+
   const username =
-    document.getElementById("loginUsername");
+    document.getElementById(
+      "loginUsername"
+    );
 
   const password =
-    document.getElementById("loginPassword");
+    document.getElementById(
+      "loginPassword"
+    );
 
   const message =
-    document.getElementById("loginMessage");
+    document.getElementById(
+      "loginMessage"
+    );
 
 
   if (username) {
-
     username.value = "";
-
   }
 
   if (password) {
-
     password.value = "";
-
   }
 
   if (message) {
-
     message.textContent = "";
-
   }
 
 }
@@ -726,30 +854,91 @@ async function logoutUser() {
 
 function applyRolePermissions() {
 
-  const employeesMenu =
-    document.getElementById("employeesMenu");
-
-
-  if (!employeesMenu) {
-
-    return;
-
-  }
-
-
   const role =
-    currentProfile?.role || "employee";
+    currentProfile?.role ||
+    "employee";
 
+
+  const employeesMenu =
+    document.getElementById(
+      "employeesMenu"
+    );
+
+
+  const navButtons =
+    document.querySelectorAll(
+      "aside nav button"
+    );
+
+
+  // Owner
 
   if (role === "owner") {
 
-    employeesMenu.style.display = "";
+    if (employeesMenu) {
 
-  } else {
+      employeesMenu.style.display =
+        "";
 
-    employeesMenu.style.display = "none";
+    }
+
+    navButtons.forEach(
+      function(button) {
+
+        button.style.display =
+          "";
+
+      }
+    );
+
+    return;
+  }
+
+
+  // Employee
+
+  if (employeesMenu) {
+
+    employeesMenu.style.display =
+      "none";
 
   }
+
+
+  const allowedPage =
+    "pos";
+
+
+  navButtons.forEach(
+    function(button) {
+
+      const onclick =
+        button.getAttribute(
+          "onclick"
+        ) || "";
+
+
+      if (
+        onclick.includes(
+          "show('pos')"
+        ) ||
+        onclick.includes(
+          "logoutUser"
+        )
+      ) {
+
+        button.style.display =
+          "";
+
+      } else {
+
+        button.style.display =
+          "none";
+
+      }
+
+    }
+  );
 
 }
 
@@ -761,10 +950,19 @@ function applyRolePermissions() {
 function updateHeader() {
 
   const userElement =
-    document.getElementById("currentUser");
+    document.getElementById(
+      "currentUser"
+    );
 
   const dateElement =
-    document.getElementById("date");
+    document.getElementById(
+      "date"
+    );
+
+  const languageSelect =
+    document.getElementById(
+      "lang"
+    );
 
 
   if (userElement) {
@@ -781,7 +979,9 @@ function updateHeader() {
 
 
     userElement.textContent =
-      username + " • " + role;
+      username +
+      " • " +
+      role;
 
   }
 
@@ -806,11 +1006,19 @@ function updateHeader() {
 
   }
 
+
+  if (languageSelect) {
+
+    languageSelect.value =
+      language;
+
+  }
+
 }
 
 
 // ============================================================
-// LANGUAGE CHANGE
+// LANGUAGE
 // ============================================================
 
 async function setLang(value) {
@@ -827,27 +1035,49 @@ async function setLang(value) {
 
   language = value;
 
+
   localStorage.setItem(
     "amba_lang",
     language
   );
 
 
-  if (currentProfile && supabaseClient) {
+  if (
+    currentProfile &&
+    currentUser &&
+    supabaseClient
+  ) {
 
     await supabaseClient
       .from("profiles")
       .update({
         language: language
       })
-      .eq("id", currentUser.id);
+      .eq(
+        "id",
+        currentUser.id
+      );
 
   }
 
 
   updateHeader();
 
-  show(currentPage);
+
+  // Employee always remains in POS
+
+  if (
+    currentProfile?.role ===
+    "employee"
+  ) {
+
+    show("pos");
+
+  } else {
+
+    show(currentPage);
+
+  }
 
 }
 
@@ -858,12 +1088,34 @@ async function setLang(value) {
 
 function show(pageName) {
 
+  // ----------------------------------------------------------
+  // SECURITY: Employee can only access POS
+  // ----------------------------------------------------------
+
+  if (
+    currentProfile?.role ===
+    "employee"
+  ) {
+
+    if (
+      pageName !== "pos"
+    ) {
+
+      pageName = "pos";
+
+    }
+
+  }
+
+
   currentPage =
     pageName;
 
 
   const title =
-    document.getElementById("title");
+    document.getElementById(
+      "title"
+    );
 
 
   if (title) {
@@ -892,11 +1144,15 @@ function show(pageName) {
   // Close mobile menu
 
   const sidebar =
-    document.querySelector("aside");
+    document.querySelector(
+      "aside"
+    );
 
   if (sidebar) {
 
-    sidebar.classList.remove("open");
+    sidebar.classList.remove(
+      "open"
+    );
 
   }
 
@@ -947,79 +1203,552 @@ function show(pageName) {
 // DASHBOARD
 // ============================================================
 
-function dashboard() {
+async function dashboard() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
+    return;
+  }
+
+
+  // Employee should never see Dashboard
+
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
+
+    show("pos");
 
     return;
 
   }
 
 
-  const role =
-    currentProfile?.role ||
-    "employee";
+  // Loading UI
+
+  app.innerHTML =
+
+    '<div class="panel">' +
+
+      '<h2>' +
+        t("dashboard") +
+      '</h2>' +
+
+      '<p>' +
+        t("loading") +
+      '</p>' +
+
+    '</div>';
 
 
-  let ownerProfitCard = "";
+  let sales = [];
+  let products = [];
+  let expenses = [];
 
 
-  if (role === "owner") {
+  // ----------------------------------------------------------
+  // Load SALES
+  // ----------------------------------------------------------
 
-    ownerProfitCard =
-      '<div class="card">' +
-      '<div class="card-title">' +
-      t("profit") +
-      '</div>' +
-      '<div class="card-value">' +
-      money(0) +
-      '</div>' +
+  if (supabaseClient) {
+
+    const salesResult =
+      await supabaseClient
+        .from("sales")
+        .select("*")
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        )
+        .limit(500);
+
+
+    if (
+      salesResult.error
+    ) {
+
+      console.error(
+        "Sales dashboard error:",
+        salesResult.error
+      );
+
+    } else {
+
+      sales =
+        salesResult.data ||
+        [];
+
+    }
+
+
+    // --------------------------------------------------------
+    // Load PRODUCTS
+    // --------------------------------------------------------
+
+    const productsResult =
+      await supabaseClient
+        .from("products")
+        .select("*")
+        .limit(500);
+
+
+    if (
+      productsResult.error
+    ) {
+
+      console.error(
+        "Products dashboard error:",
+        productsResult.error
+      );
+
+    } else {
+
+      products =
+        productsResult.data ||
+        [];
+
+    }
+
+
+    // --------------------------------------------------------
+    // Load EXPENSES
+    // --------------------------------------------------------
+
+    const expensesResult =
+      await supabaseClient
+        .from("expenses")
+        .select("*")
+        .limit(500);
+
+
+    if (
+      expensesResult.error
+    ) {
+
+      console.error(
+        "Expenses dashboard error:",
+        expensesResult.error
+      );
+
+    } else {
+
+      expenses =
+        expensesResult.data ||
+        [];
+
+    }
+
+  }
+
+
+  // ----------------------------------------------------------
+  // TODAY FILTER
+  // ----------------------------------------------------------
+
+  const todayStart =
+    getTodayStart();
+
+  const tomorrowStart =
+    getTomorrowStart();
+
+
+  const todaySales =
+    sales.filter(
+      function(record) {
+
+        const dateValue =
+          getRecordDate(record);
+
+        if (!dateValue) {
+          return false;
+        }
+
+        const date =
+          new Date(dateValue);
+
+        return (
+          date >= todayStart &&
+          date < tomorrowStart
+        );
+
+      }
+    );
+
+
+  const todayExpenses =
+    expenses.filter(
+      function(record) {
+
+        const dateValue =
+          getRecordDate(record);
+
+        if (!dateValue) {
+          return false;
+        }
+
+        const date =
+          new Date(dateValue);
+
+        return (
+          date >= todayStart &&
+          date < tomorrowStart
+        );
+
+      }
+    );
+
+
+  // ----------------------------------------------------------
+  // TODAY SALES TOTAL
+  // ----------------------------------------------------------
+
+  const todaySalesTotal =
+    todaySales.reduce(
+      function(total, record) {
+
+        return (
+          total +
+          getRecordAmount(record)
+        );
+
+      },
+      0
+    );
+
+
+  // ----------------------------------------------------------
+  // TODAY EXPENSE TOTAL
+  // ----------------------------------------------------------
+
+  const todayExpenseTotal =
+    todayExpenses.reduce(
+      function(total, record) {
+
+        return (
+          total +
+          getRecordAmount(record)
+        );
+
+      },
+      0
+    );
+
+
+  // ----------------------------------------------------------
+  // TEMP PROFIT
+  //
+  // Real product/ingredient cost will be connected
+  // after Recipes + Stock are completed.
+  // ----------------------------------------------------------
+
+  const estimatedProfit =
+    todaySalesTotal -
+    todayExpenseTotal;
+
+
+  // ----------------------------------------------------------
+  // LOW STOCK
+  // ----------------------------------------------------------
+
+  const lowStockProducts =
+    products.filter(
+      function(product) {
+
+        const qty =
+          Number(
+            product.stock_qty ??
+            product.stock ??
+            product.quantity ??
+            product.qty ??
+            0
+          );
+
+        const minimum =
+          Number(
+            product.min_stock ??
+            product.minimum_stock ??
+            product.low_stock ??
+            0
+          );
+
+
+        if (
+          minimum > 0 &&
+          qty <= minimum
+        ) {
+          return true;
+        }
+
+
+        return (
+          minimum === 0 &&
+          qty <= 0
+        );
+
+      }
+    );
+
+
+  // ----------------------------------------------------------
+  // RECENT SALES
+  // ----------------------------------------------------------
+
+  const recentSales =
+    sales.slice(
+      0,
+      8
+    );
+
+
+  // ----------------------------------------------------------
+  // RECENT SALES HTML
+  // ----------------------------------------------------------
+
+  let recentHTML = "";
+
+
+  if (
+    recentSales.length === 0
+  ) {
+
+    recentHTML =
+      '<div class="empty">' +
+        t("noSales") +
+      '</div>';
+
+  } else {
+
+    recentHTML =
+      '<div style="overflow-x:auto;">' +
+
+        '<table class="table">' +
+
+          '<thead>' +
+
+            '<tr>' +
+
+              '<th>' +
+                t("today") +
+              '</th>' +
+
+              '<th>' +
+                t("payment") +
+              '</th>' +
+
+              '<th>' +
+                t("sales") +
+              '</th>' +
+
+            '</tr>' +
+
+          '</thead>' +
+
+          '<tbody>';
+
+
+    recentSales.forEach(
+      function(record) {
+
+        const dateValue =
+          getRecordDate(record);
+
+        const amount =
+          getRecordAmount(record);
+
+        const payment =
+          getRecordPayment(record);
+
+
+        let dateText =
+          "-";
+
+
+        if (dateValue) {
+
+          const date =
+            new Date(dateValue);
+
+          dateText =
+            date.toLocaleString(
+              language === "si"
+                ? "si-LK"
+                : "en-LK",
+              {
+                dateStyle: "short",
+                timeStyle: "short"
+              }
+            );
+
+        }
+
+
+        recentHTML +=
+
+          '<tr>' +
+
+            '<td>' +
+              dateText +
+            '</td>' +
+
+            '<td>' +
+              (
+                payment ||
+                "-"
+              ) +
+            '</td>' +
+
+            '<td>' +
+              money(amount) +
+            '</td>' +
+
+          '</tr>';
+
+      }
+    );
+
+
+    recentHTML +=
+
+          '</tbody>' +
+
+        '</table>' +
+
       '</div>';
 
   }
 
 
+  // ----------------------------------------------------------
+  // DASHBOARD HTML
+  // ----------------------------------------------------------
+
   app.innerHTML =
-    '<div class="dashboard-grid">' +
+
+    '<div class="cards">' +
+
+      // Sales
 
       '<div class="card">' +
-        '<div class="card-title">' +
+
+        '<small>' +
           t("sales") +
+        '</small>' +
+
+        '<div class="num">' +
+          money(todaySalesTotal) +
         '</div>' +
-        '<div class="card-value">' +
-          money(0) +
-        '</div>' +
+
       '</div>' +
 
+
+      // Orders
+
       '<div class="card">' +
-        '<div class="card-title">' +
+
+        '<small>' +
           t("orders") +
+        '</small>' +
+
+        '<div class="num">' +
+          todaySales.length +
         '</div>' +
-        '<div class="card-value">0</div>' +
+
       '</div>' +
 
-      ownerProfitCard +
+
+      // Profit
 
       '<div class="card">' +
-        '<div class="card-title">' +
-          t("low") +
+
+        '<small>' +
+          t("profit") +
+        '</small>' +
+
+        '<div class="num">' +
+          money(estimatedProfit) +
         '</div>' +
-        '<div class="card-value">0</div>' +
+
+      '</div>' +
+
+
+      // Low Stock
+
+      '<div class="card">' +
+
+        '<small>' +
+          t("low") +
+        '</small>' +
+
+        '<div class="num">' +
+          lowStockProducts.length +
+        '</div>' +
+
       '</div>' +
 
     '</div>' +
 
-    '<div class="panel">' +
-      '<h2>' +
-        t("recent") +
-      '</h2>' +
 
-      '<div class="empty-state">' +
-        t("noData") +
+    '<div class="grid">' +
+
+
+      // Recent Sales
+
+      '<div class="panel">' +
+
+        '<h2>' +
+          t("recent") +
+        '</h2>' +
+
+        recentHTML +
+
       '</div>' +
+
+
+      // Summary
+
+      '<div class="panel">' +
+
+        '<h2>' +
+          t("today") +
+        '</h2>' +
+
+        '<p>' +
+          t("sales") +
+          ': <strong>' +
+          money(todaySalesTotal) +
+          '</strong>' +
+        '</p>' +
+
+        '<p>' +
+          t("orders") +
+          ': <strong>' +
+          todaySales.length +
+          '</strong>' +
+        '</p>' +
+
+        '<p>' +
+          t("profit") +
+          ': <strong>' +
+          money(estimatedProfit) +
+          '</strong>' +
+        '</p>' +
+
+        '<p>' +
+          t("low") +
+          ': <strong>' +
+          lowStockProducts.length +
+          '</strong>' +
+        '</p>' +
+
+      '</div>' +
+
 
     '</div>';
 
@@ -1033,16 +1762,17 @@ function dashboard() {
 function posPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
-
     return;
-
   }
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1055,23 +1785,32 @@ function posPage() {
 
       '<div class="pos-placeholder">' +
 
+
         '<div class="card">' +
+
           '<div class="card-title">' +
             t("cash") +
           '</div>' +
+
           '<div class="card-value">' +
             money(0) +
           '</div>' +
+
         '</div>' +
 
+
         '<div class="card">' +
+
           '<div class="card-title">' +
             t("card") +
           '</div>' +
+
           '<div class="card-value">' +
             money(0) +
           '</div>' +
+
         '</div>' +
+
 
       '</div>' +
 
@@ -1087,9 +1826,21 @@ function posPage() {
 function productsPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
+    return;
+  }
+
+
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
+
+    show("pos");
 
     return;
 
@@ -1097,6 +1848,7 @@ function productsPage() {
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1128,9 +1880,21 @@ function productsPage() {
 function stockPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
+    return;
+  }
+
+
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
+
+    show("pos");
 
     return;
 
@@ -1138,6 +1902,7 @@ function stockPage() {
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1160,9 +1925,21 @@ function stockPage() {
 function expensesPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
+    return;
+  }
+
+
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
+
+    show("pos");
 
     return;
 
@@ -1170,6 +1947,7 @@ function expensesPage() {
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1201,34 +1979,21 @@ function expensesPage() {
 function reportsPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
-
     return;
-
   }
 
 
-  const role =
-    currentProfile?.role ||
-    "employee";
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
 
-
-  if (role !== "owner") {
-
-    app.innerHTML =
-      '<div class="panel">' +
-
-        '<h2>' +
-          t("reportsTitle") +
-        '</h2>' +
-
-        '<p>' +
-          "මෙම කොටස Owner සඳහා පමණි." +
-        '</p>' +
-
-      '</div>';
+    show("pos");
 
     return;
 
@@ -1236,6 +2001,7 @@ function reportsPage() {
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1258,34 +2024,21 @@ function reportsPage() {
 function employeesPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
-
     return;
-
   }
 
 
-  const role =
-    currentProfile?.role ||
-    "employee";
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
 
-
-  if (role !== "owner") {
-
-    app.innerHTML =
-      '<div class="panel">' +
-
-        '<h2>' +
-          t("employeesTitle") +
-        '</h2>' +
-
-        '<p>' +
-          "මෙම කොටස Owner සඳහා පමණි." +
-        '</p>' +
-
-      '</div>';
+    show("pos");
 
     return;
 
@@ -1293,6 +2046,7 @@ function employeesPage() {
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1324,9 +2078,21 @@ function employeesPage() {
 function settingsPage() {
 
   const app =
-    document.getElementById("app");
+    document.getElementById(
+      "app"
+    );
 
   if (!app) {
+    return;
+  }
+
+
+  if (
+    currentProfile?.role !==
+    "owner"
+  ) {
+
+    show("pos");
 
     return;
 
@@ -1334,6 +2100,7 @@ function settingsPage() {
 
 
   app.innerHTML =
+
     '<div class="panel">' +
 
       '<h2>' +
@@ -1347,11 +2114,19 @@ function settingsPage() {
         '<select onchange="setLang(this.value)">' +
 
           '<option value="si"' +
-          (language === "si" ? " selected" : "") +
+          (
+            language === "si"
+              ? " selected"
+              : ""
+          ) +
           '>සිංහල</option>' +
 
           '<option value="en"' +
-          (language === "en" ? " selected" : "") +
+          (
+            language === "en"
+              ? " selected"
+              : ""
+          ) +
           '>English</option>' +
 
         '</select>' +
@@ -1378,14 +2153,14 @@ async function checkSession() {
     showLogin();
 
     return;
-
   }
 
 
   try {
 
     const result =
-      await supabaseClient.auth.getSession();
+      await supabaseClient.auth
+        .getSession();
 
 
     if (result.error) {
@@ -1398,7 +2173,6 @@ async function checkSession() {
       showLogin();
 
       return;
-
     }
 
 
@@ -1411,7 +2185,6 @@ async function checkSession() {
       showLogin();
 
       return;
-
     }
 
 
@@ -1429,7 +2202,6 @@ async function checkSession() {
       showLogin();
 
       return;
-
     }
 
 
@@ -1439,7 +2211,19 @@ async function checkSession() {
 
     updateHeader();
 
-    show("dashboard");
+
+    if (
+      currentProfile.role ===
+      "employee"
+    ) {
+
+      show("pos");
+
+    } else {
+
+      show("dashboard");
+
+    }
 
 
   } catch (error) {
@@ -1463,14 +2247,12 @@ async function checkSession() {
 function setupAuthListener() {
 
   if (!supabaseClient) {
-
     return;
-
   }
 
 
   supabaseClient.auth.onAuthStateChange(
-    async function(event, session) {
+    function(event, session) {
 
       console.log(
         "Auth event:",
@@ -1479,7 +2261,8 @@ function setupAuthListener() {
 
 
       if (
-        event === "SIGNED_OUT"
+        event ===
+        "SIGNED_OUT"
       ) {
 
         currentUser = null;
@@ -1494,7 +2277,8 @@ function setupAuthListener() {
 
 
       if (
-        event === "SIGNED_IN" &&
+        event ===
+        "SIGNED_IN" &&
         session
       ) {
 
@@ -1516,13 +2300,13 @@ function setupAuthListener() {
 function setupLoginKeyboard() {
 
   const password =
-    document.getElementById("loginPassword");
+    document.getElementById(
+      "loginPassword"
+    );
 
 
   if (!password) {
-
     return;
-
   }
 
 
@@ -1530,7 +2314,10 @@ function setupLoginKeyboard() {
     "keydown",
     function(event) {
 
-      if (event.key === "Enter") {
+      if (
+        event.key ===
+        "Enter"
+      ) {
 
         loginUser();
 
@@ -1543,7 +2330,7 @@ function setupLoginKeyboard() {
 
 
 // ============================================================
-// INITIALIZE APP
+// INITIALIZE
 // ============================================================
 
 document.addEventListener(
@@ -1555,10 +2342,10 @@ document.addEventListener(
     );
 
 
-    // Set language selector
-
     const languageSelect =
-      document.getElementById("lang");
+      document.getElementById(
+        "lang"
+      );
 
 
     if (languageSelect) {
