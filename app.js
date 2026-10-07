@@ -1,8 +1,6 @@
 // ============================================================
-// අඹ සිසිල MANAGEMENT SYSTEM
-// FULL SUPABASE VERSION
-// Authentication + Roles + Products + Stock + Recipes
-// POS + Expenses + Reports + Employees + Settings + Receipt
+// අඹ සිසිල Management System
+// Supabase Authentication + Role Based Access + POS
 // ============================================================
 
 
@@ -14,17 +12,19 @@ const SUPABASE_URL =
   "https://wazmcrsdzehterjkyeqt.supabase.co";
 
 // IMPORTANT:
-// මෙතන දැනට ඔයාගේ වැඩ කරන Publishable Key එකම දාන්න.
-// Service Role / Secret Key දාන්න එපා.
+// මෙතන දැනට ඔයාගේ app.js එකේ තියෙන SAME
+// Supabase Publishable Key එක දාන්න.
+//
+// Service Role / Secret Key එක දාන්න එපා.
 
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
 
-const supabase =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
+
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 
 // ============================================================
@@ -33,21 +33,11 @@ const supabase =
 
 let currentUser = null;
 let currentProfile = null;
+
 let currentPage = "dashboard";
 
 let language =
   localStorage.getItem("amba_language") || "si";
-
-let posProducts = [];
-let posCart = [];
-let selectedPaymentMethod = "cash";
-let customerPaid = 0;
-
-let editingProductId = null;
-let editingIngredientId = null;
-let editingExpenseId = null;
-
-let lastCompletedSale = null;
 
 
 // ============================================================
@@ -86,45 +76,11 @@ const dict = {
     loginError: "Username හෝ Password වැරදියි.",
 
     productsTitle: "Products",
-    stockTitle: "Stock / Ingredients",
+    stockTitle: "Stock",
     expensesTitle: "Expenses",
     reportsTitle: "Reports",
     employeesTitle: "Employees",
     settingsTitle: "Settings",
-
-    addProduct: "Product එකක් Add කරන්න",
-    editProduct: "Product Edit කරන්න",
-    productNameSi: "Product Name (සිංහල)",
-    productNameEn: "Product Name (English)",
-    category: "Category",
-    price: "Selling Price",
-    active: "Active",
-    save: "Save",
-    update: "Update",
-    cancel: "Cancel",
-    edit: "Edit",
-    delete: "Delete",
-
-    addIngredient: "Ingredient එකක් Add කරන්න",
-    editIngredient: "Ingredient Edit කරන්න",
-    ingredientSi: "Ingredient Name (සිංහල)",
-    ingredientEn: "Ingredient Name (English)",
-    unit: "Unit",
-    currentStock: "Current Stock",
-    minimumStock: "Minimum Stock",
-    costPerUnit: "Cost / Unit",
-
-    recipes: "Recipes",
-    recipe: "Recipe",
-    addRecipe: "Recipe එකක් Add කරන්න",
-    selectProduct: "Product එක තෝරන්න",
-    selectIngredient: "Ingredient එක තෝරන්න",
-    quantity: "Quantity",
-    saveRecipe: "Recipe Save කරන්න",
-
-    stockIn: "Stock Add කරන්න",
-    stockQuantity: "Add Quantity",
-    stockNote: "Note",
 
     currentSale: "වත්මන් බිල්පත",
     total: "මුළු එකතුව",
@@ -146,50 +102,8 @@ const dict = {
     loginAgain: "කරුණාකර නැවත Login වෙන්න.",
     cartEmptyError: "බිල්පත හිස්.",
 
-    addExpense: "Expense එකක් Add කරන්න",
-    expenseCategory: "Expense Category",
-    description: "Description",
-    amount: "Amount",
-    expenseDate: "Date",
+    language: "භාෂාව"
 
-    salesReport: "Sales Report",
-    expenseReport: "Expense Report",
-    costOfGoods: "භාණ්ඩ පිරිවැය",
-    netProfit: "ශුද්ධ ලාභය",
-    fromDate: "From",
-    toDate: "To",
-    generateReport: "Report බලන්න",
-
-    usernameCol: "Username",
-    nameCol: "Name",
-    role: "Role",
-    languageCol: "Language",
-    status: "Status",
-
-    owner: "Owner",
-    employee: "Employee",
-
-    language: "භාෂාව",
-
-    printReceipt: "Receipt Print කරන්න",
-    close: "Close",
-    receipt: "Receipt",
-    date: "Date",
-    payment: "Payment",
-    subtotal: "Subtotal",
-    customerPayment: "Customer Payment",
-    receiptChange: "Change",
-
-    yes: "Yes",
-    no: "No",
-
-    confirmDelete: "මෙය Delete කරන්නද?",
-    saved: "සාර්ථකව Save කළා.",
-    updated: "සාර්ථකව Update කළා.",
-    deleted: "සාර්ථකව Delete කළා.",
-
-    error: "දෝෂයක් ඇති වුණා.",
-    loading: "Loading..."
   },
 
 
@@ -223,45 +137,11 @@ const dict = {
     loginError: "Invalid username or password.",
 
     productsTitle: "Products",
-    stockTitle: "Stock / Ingredients",
+    stockTitle: "Stock",
     expensesTitle: "Expenses",
     reportsTitle: "Reports",
     employeesTitle: "Employees",
     settingsTitle: "Settings",
-
-    addProduct: "Add Product",
-    editProduct: "Edit Product",
-    productNameSi: "Product Name (Sinhala)",
-    productNameEn: "Product Name (English)",
-    category: "Category",
-    price: "Selling Price",
-    active: "Active",
-    save: "Save",
-    update: "Update",
-    cancel: "Cancel",
-    edit: "Edit",
-    delete: "Delete",
-
-    addIngredient: "Add Ingredient",
-    editIngredient: "Edit Ingredient",
-    ingredientSi: "Ingredient Name (Sinhala)",
-    ingredientEn: "Ingredient Name (English)",
-    unit: "Unit",
-    currentStock: "Current Stock",
-    minimumStock: "Minimum Stock",
-    costPerUnit: "Cost / Unit",
-
-    recipes: "Recipes",
-    recipe: "Recipe",
-    addRecipe: "Add Recipe",
-    selectProduct: "Select Product",
-    selectIngredient: "Select Ingredient",
-    quantity: "Quantity",
-    saveRecipe: "Save Recipe",
-
-    stockIn: "Add Stock",
-    stockQuantity: "Add Quantity",
-    stockNote: "Note",
 
     currentSale: "Current Sale",
     total: "Total",
@@ -283,57 +163,15 @@ const dict = {
     loginAgain: "Please login again.",
     cartEmptyError: "Cart is empty.",
 
-    addExpense: "Add Expense",
-    expenseCategory: "Expense Category",
-    description: "Description",
-    amount: "Amount",
-    expenseDate: "Date",
+    language: "Language"
 
-    salesReport: "Sales Report",
-    expenseReport: "Expense Report",
-    costOfGoods: "Cost of Goods",
-    netProfit: "Net Profit",
-    fromDate: "From",
-    toDate: "To",
-    generateReport: "Generate Report",
-
-    usernameCol: "Username",
-    nameCol: "Name",
-    role: "Role",
-    languageCol: "Language",
-    status: "Status",
-
-    owner: "Owner",
-    employee: "Employee",
-
-    language: "Language",
-
-    printReceipt: "Print Receipt",
-    close: "Close",
-    receipt: "Receipt",
-    date: "Date",
-    payment: "Payment",
-    subtotal: "Subtotal",
-    customerPayment: "Customer Payment",
-    receiptChange: "Change",
-
-    yes: "Yes",
-    no: "No",
-
-    confirmDelete: "Delete this item?",
-    saved: "Saved successfully.",
-    updated: "Updated successfully.",
-    deleted: "Deleted successfully.",
-
-    error: "An error occurred.",
-    loading: "Loading..."
   }
 
 };
 
 
 // ============================================================
-// HELPERS
+// TRANSLATION HELPER
 // ============================================================
 
 function t(key) {
@@ -345,6 +183,10 @@ function t(key) {
 
 }
 
+
+// ============================================================
+// MONEY
+// ============================================================
 
 function money(value) {
 
@@ -359,6 +201,10 @@ function money(value) {
 
 }
 
+
+// ============================================================
+// HTML ESCAPE
+// ============================================================
 
 function escapeHTML(value) {
 
@@ -379,13 +225,17 @@ function escapeHTML(value) {
 }
 
 
+// ============================================================
+// DATE
+// ============================================================
+
 function formatDate(value) {
 
   if (!value) return "-";
 
-  const d = new Date(value);
+  const date = new Date(value);
 
-  return d.toLocaleString(
+  return date.toLocaleString(
     "en-LK",
     {
       dateStyle: "medium",
@@ -396,74 +246,68 @@ function formatDate(value) {
 }
 
 
-function todayISO() {
-
-  const d = new Date();
-
-  const year =
-    d.getFullYear();
-
-  const month =
-    String(
-      d.getMonth() + 1
-    ).padStart(2, "0");
-
-  const day =
-    String(
-      d.getDate()
-    ).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-
-}
-
+// ============================================================
+// LOGIN SCREEN
+// ============================================================
 
 function showLogin() {
 
-  const login =
-    document.getElementById(
-      "loginScreen"
-    );
+  const loginScreen =
+    document.getElementById("loginScreen");
 
-  const app =
-    document.getElementById(
-      "mainApp"
-    );
+  const mainApp =
+    document.getElementById("mainApp");
 
-  if (login)
-    login.classList.remove(
+
+  if (loginScreen) {
+
+    loginScreen.classList.remove(
       "app-hidden"
     );
 
-  if (app)
-    app.classList.add(
+  }
+
+
+  if (mainApp) {
+
+    mainApp.classList.add(
       "app-hidden"
     );
+
+  }
 
 }
 
 
+// ============================================================
+// APP SCREEN
+// ============================================================
+
 function showApp() {
 
-  const login =
-    document.getElementById(
-      "loginScreen"
-    );
+  const loginScreen =
+    document.getElementById("loginScreen");
 
-  const app =
-    document.getElementById(
-      "mainApp"
-    );
+  const mainApp =
+    document.getElementById("mainApp");
 
-  if (login)
-    login.classList.add(
+
+  if (loginScreen) {
+
+    loginScreen.classList.add(
       "app-hidden"
     );
 
-  if (app)
-    app.classList.remove(
+  }
+
+
+  if (mainApp) {
+
+    mainApp.classList.remove(
       "app-hidden"
     );
+
+  }
 
 }
 
@@ -489,6 +333,7 @@ async function loginUser() {
       "loginMessage"
     );
 
+
   const username =
     usernameInput
       ? usernameInput.value.trim()
@@ -498,6 +343,7 @@ async function loginUser() {
     passwordInput
       ? passwordInput.value
       : "";
+
 
   if (!username || !password) {
 
@@ -513,6 +359,7 @@ async function loginUser() {
     return;
   }
 
+
   if (message) {
 
     message.textContent =
@@ -522,45 +369,76 @@ async function loginUser() {
 
   }
 
+
   try {
 
+    // --------------------------------------------------------
+    // Username → email
+    // --------------------------------------------------------
+
     const {
-      data: email,
+      data: emailData,
       error: emailError
     } =
       await supabase.rpc(
         "get_login_email",
         {
-          p_username:
-            username
+          p_username: username
         }
       );
 
-    if (emailError)
+
+    if (emailError) {
+
+      console.error(
+        "Username lookup error:",
+        emailError
+      );
+
       throw emailError;
 
-    if (!email)
+    }
+
+
+    const email = emailData;
+
+
+    if (!email) {
+
       throw new Error(
         "Invalid username"
       );
+
+    }
+
+
+    // --------------------------------------------------------
+    // Supabase Auth
+    // --------------------------------------------------------
 
     const {
       data,
       error
     } =
-      await supabase.auth
-        .signInWithPassword({
+      await supabase.auth.signInWithPassword({
 
-          email: email,
-          password: password
+        email: email,
 
-        });
+        password: password
 
-    if (error)
+      });
+
+
+    if (error) {
+
       throw error;
+
+    }
+
 
     currentUser =
       data.user;
+
 
     await loadProfile();
 
@@ -577,6 +455,7 @@ async function loginUser() {
         : "dashboard"
     );
 
+
   } catch (error) {
 
     console.error(
@@ -584,9 +463,13 @@ async function loginUser() {
       error
     );
 
-    if (message)
+
+    if (message) {
+
       message.textContent =
         t("loginError");
+
+    }
 
   }
 
@@ -594,7 +477,7 @@ async function loginUser() {
 
 
 // ============================================================
-// PROFILE
+// LOAD PROFILE
 // ============================================================
 
 async function loadProfile() {
@@ -607,6 +490,7 @@ async function loadProfile() {
 
   }
 
+
   const {
     data,
     error
@@ -614,7 +498,7 @@ async function loadProfile() {
     await supabase
       .from("profiles")
       .select(
-        "id, username, full_name, role, language, active"
+        "id, username, full_name, role, language"
       )
       .eq(
         "id",
@@ -622,40 +506,39 @@ async function loadProfile() {
       )
       .maybeSingle();
 
-  if (error)
+
+  if (error) {
+
+    console.error(
+      "Profile error:",
+      error
+    );
+
     throw error;
+
+  }
+
 
   currentProfile =
     data;
 
-  if (
-    currentProfile &&
-    currentProfile.active === false
-  ) {
 
-    await supabase.auth.signOut();
+  if (currentProfile) {
 
-    throw new Error(
-      "Account inactive"
-    );
-
-  }
-
-  if (
-    currentProfile &&
-    (
+    if (
       currentProfile.language === "si" ||
       currentProfile.language === "en"
-    )
-  ) {
+    ) {
 
-    language =
-      currentProfile.language;
+      language =
+        currentProfile.language;
 
-    localStorage.setItem(
-      "amba_language",
-      language
-    );
+      localStorage.setItem(
+        "amba_language",
+        language
+      );
+
+    }
 
   }
 
@@ -693,7 +576,6 @@ async function logoutUser() {
 function applyRolePermissions() {
 
   const ownerOnlyMenus = [
-
     "dashboardMenu",
     "productsMenu",
     "stockMenu",
@@ -701,31 +583,46 @@ function applyRolePermissions() {
     "reportsMenu",
     "employeesMenu",
     "settingsMenu"
-
   ];
+
 
   const isOwner =
     currentProfile &&
     currentProfile.role === "owner";
 
-  ownerOnlyMenus.forEach(
-    id => {
 
-      const el =
-        document.getElementById(
-          id
-        );
+  ownerOnlyMenus.forEach(id => {
 
-      if (!el)
-        return;
+    const element =
+      document.getElementById(id);
 
-      el.style.display =
-        isOwner
-          ? ""
-          : "none";
+    if (!element) return;
+
+
+    if (isOwner) {
+
+      element.style.display = "";
+
+    } else {
+
+      element.style.display = "none";
 
     }
-  );
+
+  });
+
+
+  const posMenu =
+    document.getElementById(
+      "posMenu"
+    );
+
+
+  if (posMenu) {
+
+    posMenu.style.display = "";
+
+  }
 
 }
 
@@ -736,14 +633,14 @@ function applyRolePermissions() {
 
 function updateHeader() {
 
-  const user =
+  const userElement =
     document.getElementById(
       "currentUser"
     );
 
-  if (user) {
+  if (userElement) {
 
-    user.textContent =
+    userElement.textContent =
       currentProfile
         ? (
             currentProfile.full_name ||
@@ -753,28 +650,30 @@ function updateHeader() {
 
   }
 
-  const lang =
+
+  const langElement =
     document.getElementById(
       "lang"
     );
 
-  if (lang) {
+  if (langElement) {
 
-    lang.textContent =
+    langElement.textContent =
       language === "si"
         ? "සිං"
         : "EN";
 
   }
 
-  const date =
+
+  const dateElement =
     document.getElementById(
       "date"
     );
 
-  if (date) {
+  if (dateElement) {
 
-    date.textContent =
+    dateElement.textContent =
       new Date().toLocaleDateString(
         "en-LK",
         {
@@ -798,16 +697,19 @@ async function setLang(lang) {
   if (
     lang !== "si" &&
     lang !== "en"
-  )
+  ) {
     return;
+  }
 
-  language =
-    lang;
+
+  language = lang;
+
 
   localStorage.setItem(
     "amba_language",
     language
   );
+
 
   if (currentUser) {
 
@@ -823,23 +725,35 @@ async function setLang(lang) {
 
   }
 
+
   updateHeader();
 
-  await show(
-    currentPage
-  );
+
+  if (currentPage) {
+
+    await show(
+      currentPage
+    );
+
+  }
 
 }
 
 
 // ============================================================
-// NAVIGATION
+// SHOW PAGE
 // ============================================================
 
 async function show(page) {
 
-  if (!currentProfile)
+  if (!currentProfile) {
+
     return;
+
+  }
+
+
+  // Employees can ONLY access POS
 
   if (
     currentProfile.role === "employee" &&
@@ -850,91 +764,153 @@ async function show(page) {
 
   }
 
+
   currentPage =
     page;
+
 
   const title =
     document.getElementById(
       "title"
     );
 
-  const titles = {
 
-    dashboard:
-      t("dashboard"),
+  if (title) {
 
-    pos:
-      t("pos"),
+    const titles = {
 
-    products:
-      t("products"),
+      dashboard:
+        t("dashboard"),
 
-    stock:
-      t("stock"),
+      pos:
+        t("pos"),
 
-    expenses:
-      t("expenses"),
+      products:
+        t("products"),
 
-    reports:
-      t("reports"),
+      stock:
+        t("stock"),
 
-    employees:
-      t("employees"),
+      expenses:
+        t("expenses"),
 
-    settings:
-      t("settings")
+      reports:
+        t("reports"),
 
-  };
+      employees:
+        t("employees"),
 
-  if (title)
+      settings:
+        t("settings")
+
+    };
+
+
     title.textContent =
       titles[page] ||
       "අඹ සිසිල";
+
+  }
+
 
   document
     .querySelectorAll(
       ".nav-btn"
     )
-    .forEach(
-      btn =>
-        btn.classList.remove(
-          "active"
-        )
-    );
+    .forEach(button => {
 
-  const active =
+      button.classList.remove(
+        "active"
+      );
+
+    });
+
+
+  const activeButton =
     document.querySelector(
       `[data-page="${page}"]`
     );
 
-  if (active)
-    active.classList.add(
+
+  if (activeButton) {
+
+    activeButton.classList.add(
       "active"
     );
 
-  if (page === "dashboard")
-    return dashboard();
+  }
 
-  if (page === "pos")
-    return posPage();
 
-  if (page === "products")
-    return productsPage();
+  if (page === "dashboard") {
 
-  if (page === "stock")
-    return stockPage();
+    await dashboard();
 
-  if (page === "expenses")
-    return expensesPage();
+    return;
 
-  if (page === "reports")
-    return reportsPage();
+  }
 
-  if (page === "employees")
-    return employeesPage();
 
-  if (page === "settings")
-    return settingsPage();
+  if (page === "pos") {
+
+    await posPage();
+
+    return;
+
+  }
+
+
+  if (page === "products") {
+
+    await productsPage();
+
+    return;
+
+  }
+
+
+  if (page === "stock") {
+
+    await stockPage();
+
+    return;
+
+  }
+
+
+  if (page === "expenses") {
+
+    await expensesPage();
+
+    return;
+
+  }
+
+
+  if (page === "reports") {
+
+    await reportsPage();
+
+    return;
+
+  }
+
+
+  if (page === "employees") {
+
+    await employeesPage();
+
+    return;
+
+  }
+
+
+  if (page === "settings") {
+
+    await settingsPage();
+
+    return;
+
+  }
 
 }
 
@@ -950,26 +926,90 @@ async function dashboard() {
       "app"
     );
 
-  if (!app)
-    return;
 
-  app.innerHTML =
-    `<div class="card">${t("loading")}</div>`;
+  if (!app) return;
 
-  const {
-    data: sales
-  } =
-    await supabase
+
+  // ----------------------------------------------------------
+  // Sales
+  // ----------------------------------------------------------
+
+  let salesQuery =
+    supabase
       .from("sales")
       .select(
-        "id,total,payment_method,created_at"
-      )
-      .order(
-        "created_at",
-        {
-          ascending: false
-        }
+        "id, total, payment_method, created_at"
       );
+
+
+  const {
+    data: sales,
+    error: salesError
+  } =
+    await salesQuery;
+
+
+  if (salesError) {
+
+    console.error(
+      "Dashboard sales error:",
+      salesError
+    );
+
+  }
+
+
+  const saleRows =
+    sales || [];
+
+
+  const totalSales =
+    saleRows.reduce(
+      (sum, sale) =>
+        sum +
+        Number(
+          sale.total || 0
+        ),
+      0
+    );
+
+
+  const today =
+    new Date();
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  const todaySales =
+    saleRows
+      .filter(sale => {
+
+        const d =
+          new Date(
+            sale.created_at
+          );
+
+        return d >= today;
+
+      })
+      .reduce(
+        (sum, sale) =>
+          sum +
+          Number(
+            sale.total || 0
+          ),
+        0
+      );
+
+
+  // ----------------------------------------------------------
+  // Products
+  // ----------------------------------------------------------
 
   const {
     count: productCount
@@ -988,113 +1028,81 @@ async function dashboard() {
         true
       );
 
+
+  // ----------------------------------------------------------
+  // Low stock
+  // ----------------------------------------------------------
+
   const {
-    data: ingredients
+    data: lowStock
   } =
     await supabase
       .from("ingredients")
       .select(
-        "id,name_si,name_en,current_stock,minimum_stock,unit"
+        "id, name, current_stock, min_stock"
       )
-      .order(
-        "name_si",
-        {
-          ascending: true
-        }
-      );
-
-  const saleRows =
-    sales || [];
-
-  const totalSales =
-    saleRows.reduce(
-      (sum, row) =>
-        sum +
-        Number(row.total || 0),
-      0
-    );
-
-  const startToday =
-    new Date();
-
-  startToday.setHours(
-    0,
-    0,
-    0,
-    0
-  );
-
-  const todaySales =
-    saleRows
-      .filter(
-        row =>
-          new Date(
-            row.created_at
-          ) >= startToday
+      .lte(
+        "current_stock",
+        supabase
+          ? 0
+          : 0
       )
-      .reduce(
-        (sum, row) =>
-          sum +
-          Number(
-            row.total || 0
-          ),
-        0
-      );
+      .limit(5);
 
-  const lowStock =
-    (ingredients || [])
-      .filter(
-        item =>
-          Number(
-            item.current_stock || 0
-          ) <=
-          Number(
-            item.minimum_stock || 0
-          )
-      )
-      .slice(
-        0,
-        5
-      );
 
   app.innerHTML = `
 
     <div class="dashboard-grid">
 
       <div class="stat-card">
+
         <div class="stat-title">
           ${t("totalSales")}
         </div>
+
         <div class="stat-value">
           ${money(totalSales)}
         </div>
+
       </div>
 
+
       <div class="stat-card">
+
         <div class="stat-title">
           ${t("todaySales")}
         </div>
+
         <div class="stat-value">
           ${money(todaySales)}
         </div>
+
       </div>
 
+
       <div class="stat-card">
+
         <div class="stat-title">
           ${t("totalOrders")}
         </div>
+
         <div class="stat-value">
           ${saleRows.length}
         </div>
+
       </div>
 
+
       <div class="stat-card">
+
         <div class="stat-title">
           ${t("productsCount")}
         </div>
+
         <div class="stat-value">
           ${productCount || 0}
         </div>
+
       </div>
 
     </div>
@@ -1106,147 +1114,53 @@ async function dashboard() {
         ${t("recentSales")}
       </h2>
 
-      <div class="table-wrap">
-
-        <table>
-
-          <thead>
-
-            <tr>
-              <th>${t("date")}</th>
-              <th>${t("payment")}</th>
-              <th>${t("total")}</th>
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-            ${
-              saleRows.length === 0
-
-                ? `
-                  <tr>
-                    <td colspan="3">
-                      ${t("noData")}
-                    </td>
-                  </tr>
-                `
-
-                :
-
-                saleRows
-                  .slice(
-                    0,
-                    10
-                  )
-                  .map(
-                    sale => `
-
-                      <tr>
-
-                        <td>
-                          ${formatDate(
-                            sale.created_at
-                          )}
-                        </td>
-
-                        <td>
-                          ${escapeHTML(
-                            sale.payment_method
-                          )}
-                        </td>
-
-                        <td>
-                          ${money(
-                            sale.total
-                          )}
-                        </td>
-
-                      </tr>
-
-                    `
-                  )
-                  .join("")
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>
-        ${t("lowStock")}
-      </h2>
-
       ${
-        lowStock.length === 0
-
+        saleRows.length === 0
           ? `<p>${t("noData")}</p>`
-
-          :
-
-          `
+          : `
             <div class="table-wrap">
 
               <table>
 
                 <thead>
+
                   <tr>
-                    <th>Ingredient</th>
-                    <th>Stock</th>
-                    <th>Minimum</th>
+                    <th>Date</th>
+                    <th>Payment</th>
+                    <th>Total</th>
                   </tr>
+
                 </thead>
 
                 <tbody>
 
                   ${
-                    lowStock
-                      .map(
-                        item => `
+                    saleRows
+                      .slice(-10)
+                      .reverse()
+                      .map(sale => `
+                        <tr>
 
-                          <tr>
+                          <td>
+                            ${formatDate(
+                              sale.created_at
+                            )}
+                          </td>
 
-                            <td>
-                              ${escapeHTML(
-                                language === "en"
-                                  ? (
-                                      item.name_en ||
-                                      item.name_si
-                                    )
-                                  : (
-                                      item.name_si ||
-                                      item.name_en
-                                    )
-                              )}
-                            </td>
+                          <td>
+                            ${escapeHTML(
+                              sale.payment_method
+                            )}
+                          </td>
 
-                            <td>
-                              ${Number(
-                                item.current_stock || 0
-                              )}
-                              ${escapeHTML(
-                                item.unit || ""
-                              )}
-                            </td>
+                          <td>
+                            ${money(
+                              sale.total
+                            )}
+                          </td>
 
-                            <td>
-                              ${Number(
-                                item.minimum_stock || 0
-                              )}
-                            </td>
-
-                          </tr>
-
-                        `
-                      )
+                        </tr>
+                      `)
                       .join("")
                   }
 
@@ -1266,7 +1180,21 @@ async function dashboard() {
 
 
 // ============================================================
-// POS
+// POS STATE
+// ============================================================
+
+let posProducts = [];
+
+let posCart = [];
+
+let selectedPaymentMethod =
+  "cash";
+
+let customerPaid = 0;
+
+
+// ============================================================
+// LOAD POS PRODUCTS
 // ============================================================
 
 async function loadPOSProducts() {
@@ -1277,9 +1205,13 @@ async function loadPOSProducts() {
   } =
     await supabase
       .from("products")
-      .select(
-        "id,name_si,name_en,selling_price,active"
-      )
+      .select(`
+        id,
+        name_si,
+        name_en,
+        selling_price,
+        active
+      `)
       .eq(
         "active",
         true
@@ -1291,23 +1223,32 @@ async function loadPOSProducts() {
         }
       );
 
+
   if (error) {
 
     console.error(
+      "POS products error:",
       error
     );
 
-    posProducts = [];
+    alert(
+      "Products load karanna bari una."
+    );
 
     return;
 
   }
+
 
   posProducts =
     data || [];
 
 }
 
+
+// ============================================================
+// POS PAGE
+// ============================================================
 
 async function posPage() {
 
@@ -1318,6 +1259,10 @@ async function posPage() {
 }
 
 
+// ============================================================
+// RENDER POS
+// ============================================================
+
 function renderPOS() {
 
   const app =
@@ -1325,77 +1270,100 @@ function renderPOS() {
       "app"
     );
 
-  if (!app)
-    return;
 
-  const productHTML =
+  if (!app) return;
+
+
+  let productHTML = "";
+
+
+  if (
     posProducts.length === 0
+  ) {
 
-      ? `
-        <div class="empty-state">
-          ${t("productsEmpty")}
-        </div>
-      `
+    productHTML = `
+      <div class="empty-state">
+        ${t("productsEmpty")}
+      </div>
+    `;
 
-      :
+  } else {
 
+    productHTML =
       posProducts
-        .map(
-          product => {
+        .map(product => {
 
-            const name =
-              language === "en"
-                ? (
-                    product.name_en ||
-                    product.name_si
-                  )
-                : (
-                    product.name_si ||
-                    product.name_en
-                  );
+          const productName =
+            language === "en"
+              ? (
+                  product.name_en ||
+                  product.name_si
+                )
+              : (
+                  product.name_si ||
+                  product.name_en
+                );
 
-            return `
 
-              <button
-                class="pos-product"
-                onclick="addToPOSCart('${product.id}')"
-              >
+          return `
 
-                <div class="pos-product-name">
-                  ${escapeHTML(name)}
-                </div>
+            <button
+              class="pos-product"
+              onclick="addToPOSCart('${product.id}')"
+            >
 
-                <div class="pos-product-price">
-                  ${money(
-                    product.selling_price
-                  )}
-                </div>
+              <div class="pos-product-name">
 
-              </button>
+                ${escapeHTML(
+                  productName
+                )}
 
-            `;
+              </div>
 
-          }
-        )
+
+              <div class="pos-product-price">
+
+                ${money(
+                  product.selling_price
+                )}
+
+              </div>
+
+            </button>
+
+          `;
+
+        })
         .join("");
 
+  }
 
-  const cartHTML =
+
+  // ----------------------------------------------------------
+  // CART
+  // ----------------------------------------------------------
+
+  let cartHTML = "";
+
+
+  if (
     posCart.length === 0
+  ) {
 
-      ? `
-        <div class="empty-state">
-          ${t("cartEmpty")}
-        </div>
-      `
+    cartHTML = `
+      <div class="empty-state">
+        ${t("cartEmpty")}
+      </div>
+    `;
 
-      :
+  } else {
 
+    cartHTML =
       posCart
         .map(
           (item, index) => {
 
-            const name =
+            const productName =
               language === "en"
                 ? (
                     item.name_en ||
@@ -1406,6 +1374,7 @@ function renderPOS() {
                     item.name_en
                   );
 
+
             const subtotal =
               Number(
                 item.selling_price
@@ -1414,22 +1383,31 @@ function renderPOS() {
                 item.quantity
               );
 
+
             return `
 
               <div class="pos-cart-item">
 
+
                 <div class="pos-cart-info">
 
                   <strong>
-                    ${escapeHTML(name)}
+
+                    ${escapeHTML(
+                      productName
+                    )}
+
                   </strong>
 
+
                   <small>
+
                     ${money(
                       item.selling_price
                     )}
                     ×
                     ${item.quantity}
+
                   </small>
 
                 </div>
@@ -1438,20 +1416,23 @@ function renderPOS() {
                 <div class="pos-cart-controls">
 
                   <button
-                    onclick="changePOSQty(${index},-1)"
+                    onclick="changePOSQty(${index}, -1)"
                   >
                     −
                   </button>
+
 
                   <strong>
                     ${item.quantity}
                   </strong>
 
+
                   <button
-                    onclick="changePOSQty(${index},1)"
+                    onclick="changePOSQty(${index}, 1)"
                   >
                     +
                   </button>
+
 
                   <button
                     class="pos-remove"
@@ -1464,7 +1445,11 @@ function renderPOS() {
 
 
                 <strong>
-                  ${money(subtotal)}
+
+                  ${money(
+                    subtotal
+                  )}
+
                 </strong>
 
               </div>
@@ -1475,19 +1460,28 @@ function renderPOS() {
         )
         .join("");
 
+  }
+
+
+  // ----------------------------------------------------------
+  // TOTAL
+  // ----------------------------------------------------------
 
   const total =
     getPOSCartTotal();
+
 
   const paid =
     Number(
       customerPaid
     ) || 0;
 
+
   const change =
     paid >= total
       ? paid - total
       : 0;
+
 
   const remaining =
     paid < total
@@ -1495,19 +1489,32 @@ function renderPOS() {
       : 0;
 
 
+  // ----------------------------------------------------------
+  // CASH
+  // ----------------------------------------------------------
+
   let cashHTML = "";
 
+
   if (
-    selectedPaymentMethod === "cash"
+    selectedPaymentMethod ===
+    "cash"
   ) {
 
     cashHTML = `
 
-      <div style="margin-top:15px;">
+      <div
+        style="
+          margin-top:15px;
+        "
+      >
 
         <div class="payment-title">
+
           ${t("customerGave")}
+
         </div>
+
 
         <input
           id="customerPaidInput"
@@ -1527,10 +1534,12 @@ function renderPOS() {
           "
         />
 
-        ${
-          paid >= total && total > 0
 
+        ${
+          paid >= total &&
+          total > 0
             ? `
+
               <div
                 style="
                   margin-top:10px;
@@ -1542,21 +1551,27 @@ function renderPOS() {
               >
 
                 <strong>
+
                   ${t("change")}:
-                  ${money(change)}
+
+                  ${money(
+                    change
+                  )}
+
                 </strong>
 
               </div>
-            `
 
+            `
             : ""
         }
 
 
         ${
-          paid < total && paid > 0
-
+          paid < total &&
+          paid > 0
             ? `
+
               <div
                 style="
                   margin-top:10px;
@@ -1568,13 +1583,18 @@ function renderPOS() {
               >
 
                 <strong>
+
                   ${t("remaining")}:
-                  ${money(remaining)}
+
+                  ${money(
+                    remaining
+                  )}
+
                 </strong>
 
               </div>
-            `
 
+            `
             : ""
         }
 
@@ -1585,9 +1605,14 @@ function renderPOS() {
   }
 
 
+  // ----------------------------------------------------------
+  // POS UI
+  // ----------------------------------------------------------
+
   app.innerHTML = `
 
     <div class="pos-layout">
+
 
       <div class="card">
 
@@ -1598,6 +1623,7 @@ function renderPOS() {
           </h2>
 
         </div>
+
 
         <div class="pos-product-grid">
 
@@ -1628,6 +1654,7 @@ function renderPOS() {
 
         <div class="pos-summary">
 
+
           <div class="pos-total-row">
 
             <strong>
@@ -1642,11 +1669,14 @@ function renderPOS() {
 
 
           <div class="payment-title">
+
             ${t("paymentMethod")}
+
           </div>
 
 
           <div class="payment-buttons">
+
 
             <button
               class="${
@@ -1656,7 +1686,9 @@ function renderPOS() {
               }"
               onclick="selectPOSPayment('cash')"
             >
+
               ${t("cash")}
+
             </button>
 
 
@@ -1668,8 +1700,11 @@ function renderPOS() {
               }"
               onclick="selectPOSPayment('card')"
             >
+
               ${t("card")}
+
             </button>
+
 
           </div>
 
@@ -1683,14 +1718,19 @@ function renderPOS() {
             ${
               posCart.length === 0 ||
               (
-                selectedPaymentMethod === "cash" &&
-                paid < total
+                selectedPaymentMethod ===
+                "cash" &&
+                Number(
+                  customerPaid
+                ) < total
               )
                 ? "disabled"
                 : ""
             }
           >
+
             ${t("completeSale")}
+
           </button>
 
 
@@ -1703,8 +1743,11 @@ function renderPOS() {
                 : ""
             }
           >
+
             ${t("clearBill")}
+
           </button>
+
 
         </div>
 
@@ -1717,18 +1760,22 @@ function renderPOS() {
 }
 
 
+// ============================================================
+// ADD TO CART
+// ============================================================
+
 function addToPOSCart(
   productId
 ) {
 
   const product =
     posProducts.find(
-      p =>
-        p.id === productId
+      p => p.id === productId
     );
 
-  if (!product)
-    return;
+
+  if (!product) return;
+
 
   const existing =
     posCart.find(
@@ -1736,6 +1783,7 @@ function addToPOSCart(
         item.product_id ===
         productId
     );
+
 
   if (existing) {
 
@@ -1765,21 +1813,27 @@ function addToPOSCart(
 
   }
 
+
   renderPOS();
 
 }
 
+
+// ============================================================
+// CHANGE QUANTITY
+// ============================================================
 
 function changePOSQty(
   index,
   amount
 ) {
 
-  if (!posCart[index])
-    return;
+  if (!posCart[index]) return;
+
 
   posCart[index].quantity +=
     amount;
+
 
   if (
     posCart[index].quantity <= 0
@@ -1792,27 +1846,37 @@ function changePOSQty(
 
   }
 
+
   renderPOS();
 
 }
 
 
+// ============================================================
+// REMOVE ITEM
+// ============================================================
+
 function removePOSItem(
   index
 ) {
 
-  if (!posCart[index])
-    return;
+  if (!posCart[index]) return;
+
 
   posCart.splice(
     index,
     1
   );
 
+
   renderPOS();
 
 }
 
+
+// ============================================================
+// GET TOTAL
+// ============================================================
 
 function getPOSCartTotal() {
 
@@ -1820,21 +1884,28 @@ function getPOSCartTotal() {
     (
       total,
       item
-    ) =>
-      total +
-      (
-        Number(
-          item.selling_price
-        ) *
-        Number(
-          item.quantity
-        )
-      ),
+    ) => {
+
+      return total +
+        (
+          Number(
+            item.selling_price
+          ) *
+          Number(
+            item.quantity
+          )
+        );
+
+    },
     0
   );
 
 }
 
+
+// ============================================================
+// SELECT PAYMENT
+// ============================================================
 
 function selectPOSPayment(
   method
@@ -1843,13 +1914,24 @@ function selectPOSPayment(
   selectedPaymentMethod =
     method;
 
-  if (method === "card")
+
+  if (
+    method === "card"
+  ) {
+
     customerPaid = 0;
+
+  }
+
 
   renderPOS();
 
 }
 
+
+// ============================================================
+// CUSTOMER PAID
+// ============================================================
 
 function updateCustomerPaid(
   value
@@ -1858,10 +1940,44 @@ function updateCustomerPaid(
   customerPaid =
     Number(value) || 0;
 
+
   renderPOS();
+
+
+  setTimeout(
+    () => {
+
+      const input =
+        document.getElementById(
+          "customerPaidInput"
+        );
+
+
+      if (input) {
+
+        input.focus();
+
+        try {
+
+          input.setSelectionRange(
+            input.value.length,
+            input.value.length
+          );
+
+        } catch (e) {}
+
+      }
+
+    },
+    0
+  );
 
 }
 
+
+// ============================================================
+// CLEAR CART
+// ============================================================
 
 function clearPOSCart() {
 
@@ -1872,18 +1988,21 @@ function clearPOSCart() {
   selectedPaymentMethod =
     "cash";
 
+
   renderPOS();
 
 }
 
 
 // ============================================================
-// COMPLETE POS SALE
+// COMPLETE SALE
 // ============================================================
 
 async function completePOSSale() {
 
-  if (posCart.length === 0) {
+  if (
+    posCart.length === 0
+  ) {
 
     alert(
       t("cartEmptyError")
@@ -1893,16 +2012,20 @@ async function completePOSSale() {
 
   }
 
+
   const total =
     getPOSCartTotal();
+
 
   const paid =
     Number(
       customerPaid
     ) || 0;
 
+
   if (
-    selectedPaymentMethod === "cash" &&
+    selectedPaymentMethod ===
+    "cash" &&
     paid < total
   ) {
 
@@ -1914,6 +2037,7 @@ async function completePOSSale() {
 
   }
 
+
   if (!currentUser) {
 
     alert(
@@ -1924,10 +2048,12 @@ async function completePOSSale() {
 
   }
 
+
   const buttons =
     document.querySelectorAll(
       ".pos-complete-btn"
     );
+
 
   buttons.forEach(
     button => {
@@ -1935,13 +2061,18 @@ async function completePOSSale() {
       button.disabled =
         true;
 
-      button.textContent =
+      button.innerText =
         t("saving");
 
     }
   );
 
+
   try {
+
+    // --------------------------------------------------------
+    // Prepare cart
+    // --------------------------------------------------------
 
     const saleItems =
       posCart.map(
@@ -1958,8 +2089,13 @@ async function completePOSSale() {
         })
       );
 
+
+    // --------------------------------------------------------
+    // Call Supabase RPC
+    // --------------------------------------------------------
+
     const {
-      data: saleId,
+      data,
       error
     } =
       await supabase.rpc(
@@ -1978,51 +2114,62 @@ async function completePOSSale() {
         }
       );
 
-    if (error)
+
+    if (error) {
+
+      console.error(
+        "Complete sale error:",
+        error
+      );
+
       throw error;
 
-
-    // Get receipt information
-    const {
-      data: sale
-    } =
-      await supabase
-        .from("sales")
-        .select(
-          "id,receipt_number,employee_id,subtotal,discount,total,payment_method,created_at"
-        )
-        .eq(
-          "id",
-          saleId
-        )
-        .maybeSingle();
+    }
 
 
-    lastCompletedSale = {
+    const saleId =
+      data;
 
-      sale:
-        sale,
 
-      items:
-        [...posCart],
+    const change =
+      selectedPaymentMethod ===
+      "cash"
+        ? paid - total
+        : 0;
 
-      customerPaid:
-        selectedPaymentMethod === "cash"
-          ? paid
-          : total,
 
-      change:
-        selectedPaymentMethod === "cash"
-          ? paid - total
-          : 0
-
-    };
-
+    // --------------------------------------------------------
+    // Success
+    // --------------------------------------------------------
 
     alert(
-      t("saleCompleted")
+
+      t("saleCompleted") +
+
+      "\n\n" +
+
+      t("total") +
+      ": " +
+      money(total) +
+
+      "\n" +
+
+      t("change") +
+      ": " +
+      money(change)
+
     );
 
+
+    console.log(
+      "Sale completed:",
+      saleId
+    );
+
+
+    // --------------------------------------------------------
+    // Reset POS
+    // --------------------------------------------------------
 
     posCart = [];
 
@@ -2032,21 +2179,7 @@ async function completePOSSale() {
       "cash";
 
 
-    renderPOS();
-
-
-    // Receipt automatically opens after sale
-    setTimeout(
-      () => {
-
-        if (lastCompletedSale)
-          printReceipt(
-            lastCompletedSale
-          );
-
-      },
-      300
-    );
+    await posPage();
 
 
   } catch (error) {
@@ -2056,14 +2189,17 @@ async function completePOSSale() {
       error
     );
 
+
     alert(
+
       t("saleFailed") +
+
       "\n\n" +
-      (
-        error.message ||
-        ""
-      )
+
+      error.message
+
     );
+
 
     renderPOS();
 
@@ -2083,30 +2219,17 @@ async function productsPage() {
       "app"
     );
 
-  if (!app)
-    return;
 
-  app.innerHTML =
-    `<div class="card">${t("loading")}</div>`;
+  if (!app) return;
 
 
   const {
-    data: products,
+    data,
     error
   } =
     await supabase
       .from("products")
-      .select(
-        `
-          id,
-          name_si,
-          name_en,
-          category_id,
-          selling_price,
-          active,
-          created_at
-        `
-      )
+      .select("*")
       .order(
         "created_at",
         {
@@ -2115,159 +2238,22 @@ async function productsPage() {
       );
 
 
-  const {
-    data: categories
-  } =
-    await supabase
-      .from("categories")
-      .select(
-        "id,name_si,name_en"
-      )
-      .order(
-        "name_si"
-      );
-
-
   if (error) {
 
-    console.error(
-      error
-    );
+    app.innerHTML = `
+      <div class="card">
+        Error loading products.
+      </div>
+    `;
 
-    app.innerHTML =
-      `<div class="card">${t("error")}</div>`;
+    console.error(error);
 
     return;
 
   }
 
 
-  const categoryOptions =
-    (categories || [])
-      .map(
-        category => `
-
-          <option value="${category.id}">
-            ${
-              escapeHTML(
-                language === "en"
-                  ? (
-                      category.name_en ||
-                      category.name_si
-                    )
-                  : (
-                      category.name_si ||
-                      category.name_en
-                    )
-              )
-            }
-          </option>
-
-        `
-      )
-      .join("");
-
-
   app.innerHTML = `
-
-    <div class="card">
-
-      <h2>
-        ${t("addProduct")}
-      </h2>
-
-
-      <form
-        onsubmit="saveProduct(event)"
-        style="
-          display:grid;
-          gap:10px;
-          margin-bottom:20px;
-        "
-      >
-
-        <input
-          type="hidden"
-          id="productId"
-        />
-
-
-        <input
-          id="productNameSi"
-          required
-          placeholder="${t("productNameSi")}"
-          style="padding:11px;"
-        />
-
-
-        <input
-          id="productNameEn"
-          placeholder="${t("productNameEn")}"
-          style="padding:11px;"
-        />
-
-
-        <select
-          id="productCategory"
-          style="padding:11px;"
-        >
-
-          <option value="">
-            ${t("category")}
-          </option>
-
-          ${categoryOptions}
-
-        </select>
-
-
-        <input
-          id="productPrice"
-          required
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="${t("price")}"
-          style="padding:11px;"
-        />
-
-
-        <label>
-
-          <input
-            id="productActive"
-            type="checkbox"
-            checked
-          />
-
-          ${t("active")}
-
-        </label>
-
-
-        <div>
-
-          <button
-            class="primary-btn"
-            type="submit"
-          >
-            ${t("save")}
-          </button>
-
-          <button
-            class="secondary-btn"
-            type="button"
-            onclick="resetProductForm()"
-          >
-            ${t("cancel")}
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
 
     <div class="card">
 
@@ -2284,11 +2270,17 @@ async function productsPage() {
 
             <tr>
 
-              <th>Name</th>
-              <th>Category</th>
-              <th>Price</th>
-              <th>Active</th>
-              <th>Action</th>
+              <th>
+                Name
+              </th>
+
+              <th>
+                Price
+              </th>
+
+              <th>
+                Active
+              </th>
 
             </tr>
 
@@ -2298,96 +2290,37 @@ async function productsPage() {
           <tbody>
 
             ${
-              (products || [])
+              (data || [])
                 .map(
-                  product => {
+                  product => `
 
-                    const category =
-                      (categories || [])
-                        .find(
-                          c =>
-                            c.id ===
-                            product.category_id
-                        );
+                    <tr>
 
-                    const name =
-                      language === "en"
-                        ? (
-                            product.name_en ||
-                            product.name_si
-                          )
-                        : (
-                            product.name_si ||
-                            product.name_en
-                          );
+                      <td>
+                        ${escapeHTML(
+                          product.name_si ||
+                          product.name_en ||
+                          "-"
+                        )}
+                      </td>
 
-                    return `
+                      <td>
+                        ${money(
+                          product.selling_price
+                        )}
+                      </td>
 
-                      <tr>
+                      <td>
+                        ${
+                          product.active
+                            ? "Yes"
+                            : "No"
+                        }
+                      </td>
 
-                        <td>
-                          ${escapeHTML(name)}
-                        </td>
+                    </tr>
 
-                        <td>
-                          ${
-                            category
-                              ? escapeHTML(
-                                  language === "en"
-                                    ? (
-                                        category.name_en ||
-                                        category.name_si
-                                      )
-                                    : (
-                                        category.name_si ||
-                                        category.name_en
-                                      )
-                                )
-                              : "-"
-                          }
-                        </td>
-
-                        <td>
-                          ${money(
-                            product.selling_price
-                          )}
-                        </td>
-
-                        <td>
-                          ${
-                            product.active
-                              ? t("yes")
-                              : t("no")
-                          }
-                        </td>
-
-                        <td>
-
-                          <button
-                            class="secondary-btn"
-                            onclick="editProduct('${product.id}')"
-                          >
-                            ${t("edit")}
-                          </button>
-
-                          <button
-                            class="secondary-btn"
-                            onclick="toggleProduct('${product.id}',${product.active ? "false" : "true"})"
-                          >
-                            ${
-                              product.active
-                                ? "Disable"
-                                : "Enable"
-                            }
-                          </button>
-
-                        </td>
-
-                      </tr>
-
-                    `;
-
-                  }
+                  `
                 )
                 .join("")
             }
@@ -2400,340 +2333,13 @@ async function productsPage() {
 
     </div>
 
-
-    <div class="card">
-
-      <h2>
-        ${t("category")}
-      </h2>
-
-      <form
-        onsubmit="saveCategory(event)"
-        style="
-          display:grid;
-          gap:10px;
-        "
-      >
-
-        <input
-          id="categoryNameSi"
-          required
-          placeholder="Category Sinhala"
-          style="padding:11px;"
-        />
-
-        <input
-          id="categoryNameEn"
-          placeholder="Category English"
-          style="padding:11px;"
-        />
-
-        <button
-          class="primary-btn"
-          type="submit"
-        >
-          ${t("save")}
-        </button>
-
-      </form>
-
-    </div>
-
   `;
 
 }
 
 
 // ============================================================
-// PRODUCT FUNCTIONS
-// ============================================================
-
-async function saveProduct(event) {
-
-  event.preventDefault();
-
-  const id =
-    document.getElementById(
-      "productId"
-    ).value;
-
-  const payload = {
-
-    name_si:
-      document.getElementById(
-        "productNameSi"
-      ).value.trim(),
-
-    name_en:
-      document.getElementById(
-        "productNameEn"
-      ).value.trim(),
-
-    category_id:
-      document.getElementById(
-        "productCategory"
-      ).value || null,
-
-    selling_price:
-      Number(
-        document.getElementById(
-          "productPrice"
-        ).value
-      ),
-
-    active:
-      document.getElementById(
-        "productActive"
-      ).checked
-
-  };
-
-
-  try {
-
-    if (id) {
-
-      const {
-        error
-      } =
-        await supabase
-          .from("products")
-          .update(
-            payload
-          )
-          .eq(
-            "id",
-            id
-          );
-
-      if (error)
-        throw error;
-
-      alert(
-        t("updated")
-      );
-
-    } else {
-
-      const {
-        error
-      } =
-        await supabase
-          .from("products")
-          .insert(
-            payload
-          );
-
-      if (error)
-        throw error;
-
-      alert(
-        t("saved")
-      );
-
-    }
-
-    await productsPage();
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-    alert(
-      error.message ||
-      t("error")
-    );
-
-  }
-
-}
-
-
-async function editProduct(
-  id
-) {
-
-  const {
-    data,
-    error
-  } =
-    await supabase
-      .from("products")
-      .select("*")
-      .eq(
-        "id",
-        id
-      )
-      .single();
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  const idInput =
-    document.getElementById(
-      "productId"
-    );
-
-  if (!idInput)
-    return;
-
-  idInput.value =
-    data.id;
-
-  document.getElementById(
-    "productNameSi"
-  ).value =
-    data.name_si || "";
-
-  document.getElementById(
-    "productNameEn"
-  ).value =
-    data.name_en || "";
-
-  document.getElementById(
-    "productCategory"
-  ).value =
-    data.category_id || "";
-
-  document.getElementById(
-    "productPrice"
-  ).value =
-    data.selling_price || 0;
-
-  document.getElementById(
-    "productActive"
-  ).checked =
-    data.active !== false;
-
-  window.scrollTo(
-    {
-      top: 0,
-      behavior: "smooth"
-    }
-  );
-
-}
-
-
-async function toggleProduct(
-  id,
-  active
-) {
-
-  const {
-    error
-  } =
-    await supabase
-      .from("products")
-      .update({
-        active:
-          active
-      })
-      .eq(
-        "id",
-        id
-      );
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  await productsPage();
-
-}
-
-
-function resetProductForm() {
-
-  const form =
-    document.querySelector(
-      "form"
-    );
-
-  if (form)
-    form.reset();
-
-  const id =
-    document.getElementById(
-      "productId"
-    );
-
-  if (id)
-    id.value = "";
-
-}
-
-
-async function saveCategory(
-  event
-) {
-
-  event.preventDefault();
-
-  const nameSi =
-    document.getElementById(
-      "categoryNameSi"
-    ).value.trim();
-
-  const nameEn =
-    document.getElementById(
-      "categoryNameEn"
-    ).value.trim();
-
-  if (!nameSi && !nameEn)
-    return;
-
-  const {
-    error
-  } =
-    await supabase
-      .from("categories")
-      .insert({
-
-        name_si:
-          nameSi,
-
-        name_en:
-          nameEn
-
-      });
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  alert(
-    t("saved")
-  );
-
-  await productsPage();
-
-}
-
-
-// ============================================================
-// STOCK / INGREDIENTS PAGE
+// STOCK PAGE
 // ============================================================
 
 async function stockPage() {
@@ -2743,235 +2349,41 @@ async function stockPage() {
       "app"
     );
 
-  if (!app)
-    return;
+
+  if (!app) return;
+
 
   const {
-    data: ingredients
+    data,
+    error
   } =
     await supabase
       .from("ingredients")
       .select("*")
       .order(
-        "name_si",
+        "name",
         {
           ascending: true
         }
       );
 
 
-  const {
-    data: products
-  } =
-    await supabase
-      .from("products")
-      .select(
-        "id,name_si,name_en"
-      )
-      .order(
-        "name_si"
-      );
+  if (error) {
 
+    app.innerHTML = `
+      <div class="card">
+        Error loading stock.
+      </div>
+    `;
 
-  const {
-    data: recipes
-  } =
-    await supabase
-      .from("recipes")
-      .select(
-        "*"
-      );
+    console.error(error);
+
+    return;
+
+  }
 
 
   app.innerHTML = `
-
-    <div class="card">
-
-      <h2>
-        ${t("addIngredient")}
-      </h2>
-
-
-      <form
-        onsubmit="saveIngredient(event)"
-        style="
-          display:grid;
-          gap:10px;
-        "
-      >
-
-        <input
-          type="hidden"
-          id="ingredientId"
-        />
-
-        <input
-          id="ingredientNameSi"
-          required
-          placeholder="${t("ingredientSi")}"
-          style="padding:11px;"
-        />
-
-        <input
-          id="ingredientNameEn"
-          placeholder="${t("ingredientEn")}"
-          style="padding:11px;"
-        />
-
-
-        <select
-          id="ingredientUnit"
-          style="padding:11px;"
-        >
-
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-          <option value="ml">ml</option>
-          <option value="l">l</option>
-          <option value="pcs">pcs</option>
-
-        </select>
-
-
-        <input
-          id="ingredientStock"
-          type="number"
-          min="0"
-          step="0.001"
-          placeholder="${t("currentStock")}"
-          style="padding:11px;"
-        />
-
-
-        <input
-          id="ingredientMinimum"
-          type="number"
-          min="0"
-          step="0.001"
-          placeholder="${t("minimumStock")}"
-          style="padding:11px;"
-        />
-
-
-        <input
-          id="ingredientCost"
-          type="number"
-          min="0"
-          step="0.0001"
-          placeholder="${t("costPerUnit")}"
-          style="padding:11px;"
-        />
-
-
-        <div>
-
-          <button
-            class="primary-btn"
-            type="submit"
-          >
-            ${t("save")}
-          </button>
-
-          <button
-            class="secondary-btn"
-            type="button"
-            onclick="resetIngredientForm()"
-          >
-            ${t("cancel")}
-          </button>
-
-        </div>
-
-      </form>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>
-        ${t("stockIn")}
-      </h2>
-
-
-      <form
-        onsubmit="addStock(event)"
-        style="
-          display:grid;
-          gap:10px;
-        "
-      >
-
-        <select
-          id="stockIngredient"
-          required
-          style="padding:11px;"
-        >
-
-          <option value="">
-            ${t("selectIngredient")}
-          </option>
-
-          ${
-            (ingredients || [])
-              .map(
-                item => `
-
-                  <option value="${item.id}">
-
-                    ${
-                      escapeHTML(
-                        language === "en"
-                          ? (
-                              item.name_en ||
-                              item.name_si
-                            )
-                          : (
-                              item.name_si ||
-                              item.name_en
-                            )
-                      )
-                    }
-
-                  </option>
-
-                `
-              )
-              .join("")
-          }
-
-        </select>
-
-
-        <input
-          id="stockAddQuantity"
-          required
-          type="number"
-          min="0.001"
-          step="0.001"
-          placeholder="${t("stockQuantity")}"
-          style="padding:11px;"
-        />
-
-
-        <input
-          id="stockNote"
-          placeholder="${t("stockNote")}"
-          style="padding:11px;"
-        />
-
-
-        <button
-          class="primary-btn"
-          type="submit"
-        >
-          ${t("stockIn")}
-        </button>
-
-      </form>
-
-    </div>
-
 
     <div class="card">
 
@@ -2988,12 +2400,21 @@ async function stockPage() {
 
             <tr>
 
-              <th>Ingredient</th>
-              <th>Unit</th>
-              <th>Stock</th>
-              <th>Minimum</th>
-              <th>Cost</th>
-              <th>Action</th>
+              <th>
+                Ingredient
+              </th>
+
+              <th>
+                Unit
+              </th>
+
+              <th>
+                Current Stock
+              </th>
+
+              <th>
+                Minimum
+              </th>
 
             </tr>
 
@@ -3003,33 +2424,21 @@ async function stockPage() {
           <tbody>
 
             ${
-              (ingredients || [])
+              (data || [])
                 .map(
                   item => `
 
                     <tr>
 
                       <td>
-
-                        ${
-                          escapeHTML(
-                            language === "en"
-                              ? (
-                                  item.name_en ||
-                                  item.name_si
-                                )
-                              : (
-                                  item.name_si ||
-                                  item.name_en
-                                )
-                          )
-                        }
-
+                        ${escapeHTML(
+                          item.name
+                        )}
                       </td>
 
                       <td>
                         ${escapeHTML(
-                          item.unit || ""
+                          item.unit || "-"
                         )}
                       </td>
 
@@ -3041,267 +2450,13 @@ async function stockPage() {
 
                       <td>
                         ${Number(
-                          item.minimum_stock || 0
+                          item.min_stock || 0
                         )}
-                      </td>
-
-                      <td>
-                        ${money(
-                          item.cost_per_unit
-                        )}
-                      </td>
-
-                      <td>
-
-                        <button
-                          class="secondary-btn"
-                          onclick="editIngredient('${item.id}')"
-                        >
-                          ${t("edit")}
-                        </button>
-
                       </td>
 
                     </tr>
 
                   `
-                )
-                .join("")
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>
-        ${t("recipes")}
-      </h2>
-
-
-      <form
-        onsubmit="saveRecipe(event)"
-        style="
-          display:grid;
-          gap:10px;
-        "
-      >
-
-        <select
-          id="recipeProduct"
-          required
-          style="padding:11px;"
-        >
-
-          <option value="">
-            ${t("selectProduct")}
-          </option>
-
-          ${
-            (products || [])
-              .map(
-                p => `
-
-                  <option value="${p.id}">
-
-                    ${
-                      escapeHTML(
-                        language === "en"
-                          ? (
-                              p.name_en ||
-                              p.name_si
-                            )
-                          : (
-                              p.name_si ||
-                              p.name_en
-                            )
-                      )
-                    }
-
-                  </option>
-
-                `
-              )
-              .join("")
-          }
-
-        </select>
-
-
-        <select
-          id="recipeIngredient"
-          required
-          style="padding:11px;"
-        >
-
-          <option value="">
-            ${t("selectIngredient")}
-          </option>
-
-          ${
-            (ingredients || [])
-              .map(
-                item => `
-
-                  <option value="${item.id}">
-
-                    ${
-                      escapeHTML(
-                        language === "en"
-                          ? (
-                              item.name_en ||
-                              item.name_si
-                            )
-                          : (
-                              item.name_si ||
-                              item.name_en
-                            )
-                      )
-                    }
-
-                  </option>
-
-                `
-              )
-              .join("")
-          }
-
-        </select>
-
-
-        <input
-          id="recipeQuantity"
-          required
-          type="number"
-          min="0.0001"
-          step="0.0001"
-          placeholder="${t("quantity")}"
-          style="padding:11px;"
-        />
-
-
-        <button
-          class="primary-btn"
-          type="submit"
-        >
-          ${t("saveRecipe")}
-        </button>
-
-      </form>
-
-
-      <div
-        class="table-wrap"
-        style="margin-top:20px;"
-      >
-
-        <table>
-
-          <thead>
-
-            <tr>
-
-              <th>Product</th>
-              <th>Ingredient</th>
-              <th>Quantity</th>
-              <th>Action</th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            ${
-              (recipes || [])
-                .map(
-                  recipe => {
-
-                    const product =
-                      (products || [])
-                        .find(
-                          p =>
-                            p.id ===
-                            recipe.product_id
-                        );
-
-                    const ingredient =
-                      (ingredients || [])
-                        .find(
-                          i =>
-                            i.id ===
-                            recipe.ingredient_id
-                        );
-
-                    return `
-
-                      <tr>
-
-                        <td>
-                          ${
-                            product
-                              ? escapeHTML(
-                                  language === "en"
-                                    ? (
-                                        product.name_en ||
-                                        product.name_si
-                                      )
-                                    : (
-                                        product.name_si ||
-                                        product.name_en
-                                      )
-                                )
-                              : "-"
-                          }
-                        </td>
-
-                        <td>
-                          ${
-                            ingredient
-                              ? escapeHTML(
-                                  language === "en"
-                                    ? (
-                                        ingredient.name_en ||
-                                        ingredient.name_si
-                                      )
-                                    : (
-                                        ingredient.name_si ||
-                                        ingredient.name_en
-                                      )
-                                )
-                              : "-"
-                          }
-                        </td>
-
-                        <td>
-                          ${Number(
-                            recipe.quantity
-                          )}
-                        </td>
-
-                        <td>
-
-                          <button
-                            class="secondary-btn"
-                            onclick="deleteRecipe('${recipe.id}')"
-                          >
-                            ${t("delete")}
-                          </button>
-
-                        </td>
-
-                      </tr>
-
-                    `;
-
-                  }
                 )
                 .join("")
             }
@@ -3320,475 +2475,7 @@ async function stockPage() {
 
 
 // ============================================================
-// INGREDIENT FUNCTIONS
-// ============================================================
-
-async function saveIngredient(
-  event
-) {
-
-  event.preventDefault();
-
-  const id =
-    document.getElementById(
-      "ingredientId"
-    ).value;
-
-  const payload = {
-
-    name_si:
-      document.getElementById(
-        "ingredientNameSi"
-      ).value.trim(),
-
-    name_en:
-      document.getElementById(
-        "ingredientNameEn"
-      ).value.trim(),
-
-    unit:
-      document.getElementById(
-        "ingredientUnit"
-      ).value,
-
-    current_stock:
-      Number(
-        document.getElementById(
-          "ingredientStock"
-        ).value
-      ) || 0,
-
-    minimum_stock:
-      Number(
-        document.getElementById(
-          "ingredientMinimum"
-        ).value
-      ) || 0,
-
-    cost_per_unit:
-      Number(
-        document.getElementById(
-          "ingredientCost"
-        ).value
-      ) || 0
-
-  };
-
-
-  try {
-
-    if (id) {
-
-      const {
-        error
-      } =
-        await supabase
-          .from("ingredients")
-          .update(
-            payload
-          )
-          .eq(
-            "id",
-            id
-          );
-
-      if (error)
-        throw error;
-
-      alert(
-        t("updated")
-      );
-
-    } else {
-
-      const {
-        error
-      } =
-        await supabase
-          .from("ingredients")
-          .insert(
-            payload
-          );
-
-      if (error)
-        throw error;
-
-      alert(
-        t("saved")
-      );
-
-    }
-
-    await stockPage();
-
-  } catch (error) {
-
-    console.error(
-      error
-    );
-
-    alert(
-      error.message ||
-      t("error")
-    );
-
-  }
-
-}
-
-
-async function editIngredient(
-  id
-) {
-
-  const {
-    data,
-    error
-  } =
-    await supabase
-      .from("ingredients")
-      .select("*")
-      .eq(
-        "id",
-        id
-      )
-      .single();
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  document.getElementById(
-    "ingredientId"
-  ).value =
-    data.id;
-
-  document.getElementById(
-    "ingredientNameSi"
-  ).value =
-    data.name_si || "";
-
-  document.getElementById(
-    "ingredientNameEn"
-  ).value =
-    data.name_en || "";
-
-  document.getElementById(
-    "ingredientUnit"
-  ).value =
-    data.unit || "g";
-
-  document.getElementById(
-    "ingredientStock"
-  ).value =
-    data.current_stock || 0;
-
-  document.getElementById(
-    "ingredientMinimum"
-  ).value =
-    data.minimum_stock || 0;
-
-  document.getElementById(
-    "ingredientCost"
-  ).value =
-    data.cost_per_unit || 0;
-
-  window.scrollTo(
-    {
-      top: 0,
-      behavior: "smooth"
-    }
-  );
-
-}
-
-
-function resetIngredientForm() {
-
-  document
-    .getElementById(
-      "ingredientId"
-    ).value = "";
-
-  document
-    .getElementById(
-      "ingredientNameSi"
-    ).value = "";
-
-  document
-    .getElementById(
-      "ingredientNameEn"
-    ).value = "";
-
-  document
-    .getElementById(
-      "ingredientStock"
-    ).value = "";
-
-  document
-    .getElementById(
-      "ingredientMinimum"
-    ).value = "";
-
-  document
-    .getElementById(
-      "ingredientCost"
-    ).value = "";
-
-}
-
-
-async function addStock(
-  event
-) {
-
-  event.preventDefault();
-
-  const ingredientId =
-    document.getElementById(
-      "stockIngredient"
-    ).value;
-
-  const quantity =
-    Number(
-      document.getElementById(
-        "stockAddQuantity"
-      ).value
-    );
-
-  const note =
-    document.getElementById(
-      "stockNote"
-    ).value.trim();
-
-  if (
-    !ingredientId ||
-    quantity <= 0
-  )
-    return;
-
-  const {
-    data: ingredient,
-    error: findError
-  } =
-    await supabase
-      .from("ingredients")
-      .select(
-        "current_stock,cost_per_unit"
-      )
-      .eq(
-        "id",
-        ingredientId
-      )
-      .single();
-
-  if (findError) {
-
-    alert(
-      findError.message
-    );
-
-    return;
-
-  }
-
-  const {
-    error: updateError
-  } =
-    await supabase
-      .from("ingredients")
-      .update({
-
-        current_stock:
-          Number(
-            ingredient.current_stock || 0
-          ) + quantity,
-
-        updated_at:
-          new Date().toISOString()
-
-      })
-      .eq(
-        "id",
-        ingredientId
-      );
-
-  if (updateError) {
-
-    alert(
-      updateError.message
-    );
-
-    return;
-
-  }
-
-  const {
-    error: movementError
-  } =
-    await supabase
-      .from("stock_movements")
-      .insert({
-
-        ingredient_id:
-          ingredientId,
-
-        movement_type:
-          "purchase",
-
-        quantity:
-          quantity,
-
-        unit_cost:
-          Number(
-            ingredient.cost_per_unit || 0
-          ),
-
-        note:
-          note || "Stock In",
-
-        created_by:
-          currentUser
-            ? currentUser.id
-            : null
-
-      });
-
-  if (movementError) {
-
-    console.error(
-      movementError
-    );
-
-  }
-
-  alert(
-    t("saved")
-  );
-
-  await stockPage();
-
-}
-
-
-async function saveRecipe(
-  event
-) {
-
-  event.preventDefault();
-
-  const productId =
-    document.getElementById(
-      "recipeProduct"
-    ).value;
-
-  const ingredientId =
-    document.getElementById(
-      "recipeIngredient"
-    ).value;
-
-  const quantity =
-    Number(
-      document.getElementById(
-        "recipeQuantity"
-      ).value
-    );
-
-  if (
-    !productId ||
-    !ingredientId ||
-    quantity <= 0
-  )
-    return;
-
-  const {
-    error
-  } =
-    await supabase
-      .from("recipes")
-      .upsert(
-        {
-
-          product_id:
-            productId,
-
-          ingredient_id:
-            ingredientId,
-
-          quantity:
-            quantity
-
-        },
-        {
-          onConflict:
-            "product_id,ingredient_id"
-        }
-      );
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  alert(
-    t("saved")
-  );
-
-  await stockPage();
-
-}
-
-
-async function deleteRecipe(
-  id
-) {
-
-  if (
-    !confirm(
-      t("confirmDelete")
-    )
-  )
-    return;
-
-  const {
-    error
-  } =
-    await supabase
-      .from("recipes")
-      .delete()
-      .eq(
-        "id",
-        id
-      );
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  await stockPage();
-
-}
-
-
-// ============================================================
-// EXPENSES
+// EXPENSES PAGE
 // ============================================================
 
 async function expensesPage() {
@@ -3798,107 +2485,42 @@ async function expensesPage() {
       "app"
     );
 
-  if (!app)
-    return;
+
+  if (!app) return;
+
 
   const {
-    data: expenses
+    data,
+    error
   } =
     await supabase
       .from("expenses")
       .select("*")
       .order(
-        "expense_date",
-        {
-          ascending: false
-        }
-      )
-      .order(
         "created_at",
         {
           ascending: false
         }
-      );
+      )
+      .limit(50);
+
+
+  if (error) {
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading expenses.
+      </div>
+    `;
+
+    console.error(error);
+
+    return;
+
+  }
 
 
   app.innerHTML = `
-
-    <div class="card">
-
-      <h2>
-        ${t("addExpense")}
-      </h2>
-
-
-      <form
-        onsubmit="saveExpense(event)"
-        style="
-          display:grid;
-          gap:10px;
-        "
-      >
-
-        <input
-          id="expenseCategory"
-          placeholder="${t("expenseCategory")}"
-          style="padding:11px;"
-        />
-
-
-        <input
-          id="expenseDescription"
-          required
-          placeholder="${t("description")}"
-          style="padding:11px;"
-        />
-
-
-        <input
-          id="expenseAmount"
-          required
-          type="number"
-          min="0"
-          step="0.01"
-          placeholder="${t("amount")}"
-          style="padding:11px;"
-        />
-
-
-        <select
-          id="expensePayment"
-          style="padding:11px;"
-        >
-
-          <option value="cash">
-            ${t("cash")}
-          </option>
-
-          <option value="card">
-            ${t("card")}
-          </option>
-
-        </select>
-
-
-        <input
-          id="expenseDate"
-          type="date"
-          value="${todayISO()}"
-          style="padding:11px;"
-        />
-
-
-        <button
-          class="primary-btn"
-          type="submit"
-        >
-          ${t("save")}
-        </button>
-
-      </form>
-
-    </div>
-
 
     <div class="card">
 
@@ -3915,12 +2537,17 @@ async function expensesPage() {
 
             <tr>
 
-              <th>${t("date")}</th>
-              <th>${t("expenseCategory")}</th>
-              <th>${t("description")}</th>
-              <th>${t("amount")}</th>
-              <th>${t("payment")}</th>
-              <th>${t("delete")}</th>
+              <th>
+                Date
+              </th>
+
+              <th>
+                Description
+              </th>
+
+              <th>
+                Amount
+              </th>
 
             </tr>
 
@@ -3930,55 +2557,30 @@ async function expensesPage() {
           <tbody>
 
             ${
-              (expenses || [])
+              (data || [])
                 .map(
-                  expense => `
+                  item => `
 
                     <tr>
 
                       <td>
-                        ${escapeHTML(
-                          expense.expense_date ||
-                          expense.created_at
+                        ${formatDate(
+                          item.created_at
                         )}
                       </td>
 
                       <td>
                         ${escapeHTML(
-                          expense.category ||
-                          "-"
-                        )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          expense.description ||
+                          item.description ||
+                          item.name ||
                           "-"
                         )}
                       </td>
 
                       <td>
                         ${money(
-                          expense.amount
+                          item.amount
                         )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          expense.payment_method ||
-                          "-"
-                        )}
-                      </td>
-
-                      <td>
-
-                        <button
-                          class="secondary-btn"
-                          onclick="deleteExpense('${expense.id}')"
-                        >
-                          ${t("delete")}
-                        </button>
-
                       </td>
 
                     </tr>
@@ -4001,116 +2603,8 @@ async function expensesPage() {
 }
 
 
-async function saveExpense(
-  event
-) {
-
-  event.preventDefault();
-
-  const payload = {
-
-    category:
-      document.getElementById(
-        "expenseCategory"
-      ).value.trim(),
-
-    description:
-      document.getElementById(
-        "expenseDescription"
-      ).value.trim(),
-
-    amount:
-      Number(
-        document.getElementById(
-          "expenseAmount"
-        ).value
-      ),
-
-    payment_method:
-      document.getElementById(
-        "expensePayment"
-      ).value,
-
-    expense_date:
-      document.getElementById(
-        "expenseDate"
-      ).value,
-
-    created_by:
-      currentUser
-        ? currentUser.id
-        : null
-
-  };
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("expenses")
-      .insert(
-        payload
-      );
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  alert(
-    t("saved")
-  );
-
-  await expensesPage();
-
-}
-
-
-async function deleteExpense(
-  id
-) {
-
-  if (
-    !confirm(
-      t("confirmDelete")
-    )
-  )
-    return;
-
-  const {
-    error
-  } =
-    await supabase
-      .from("expenses")
-      .delete()
-      .eq(
-        "id",
-        id
-      );
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  await expensesPage();
-
-}
-
-
 // ============================================================
-// REPORTS
+// REPORTS PAGE
 // ============================================================
 
 async function reportsPage() {
@@ -4120,142 +2614,18 @@ async function reportsPage() {
       "app"
     );
 
-  if (!app)
-    return;
 
-  const today =
-    todayISO();
-
-  app.innerHTML = `
-
-    <div class="card">
-
-      <h2>
-        ${t("reportsTitle")}
-      </h2>
-
-
-      <div
-        style="
-          display:grid;
-          grid-template-columns:
-            repeat(auto-fit,minmax(150px,1fr));
-          gap:10px;
-        "
-      >
-
-        <div>
-
-          <label>
-            ${t("fromDate")}
-          </label>
-
-          <input
-            id="reportFrom"
-            type="date"
-            value="${today}"
-            style="
-              width:100%;
-              box-sizing:border-box;
-              padding:10px;
-            "
-          />
-
-        </div>
-
-
-        <div>
-
-          <label>
-            ${t("toDate")}
-          </label>
-
-          <input
-            id="reportTo"
-            type="date"
-            value="${today}"
-            style="
-              width:100%;
-              box-sizing:border-box;
-              padding:10px;
-            "
-          />
-
-        </div>
-
-      </div>
-
-
-      <button
-        class="primary-btn"
-        onclick="generateReport()"
-        style="margin-top:12px;"
-      >
-        ${t("generateReport")}
-      </button>
-
-
-      <div
-        id="reportResult"
-        style="margin-top:20px;"
-      ></div>
-
-    </div>
-
-  `;
-
-  await generateReport();
-
-}
-
-
-async function generateReport() {
-
-  const result =
-    document.getElementById(
-      "reportResult"
-    );
-
-  if (!result)
-    return;
-
-  const from =
-    document.getElementById(
-      "reportFrom"
-    ).value;
-
-  const to =
-    document.getElementById(
-      "reportTo"
-    ).value;
-
-
-  const start =
-    new Date(
-      `${from}T00:00:00`
-    );
-
-  const end =
-    new Date(
-      `${to}T23:59:59.999`
-    );
+  if (!app) return;
 
 
   const {
-    data: sales
+    data,
+    error
   } =
     await supabase
       .from("sales")
       .select(
         "id,total,payment_method,created_at"
-      )
-      .gte(
-        "created_at",
-        start.toISOString()
-      )
-      .lte(
-        "created_at",
-        end.toISOString()
       )
       .order(
         "created_at",
@@ -4265,193 +2635,37 @@ async function generateReport() {
       );
 
 
-  const {
-    data: expenses
-  } =
-    await supabase
-      .from("expenses")
-      .select(
-        "id,amount,description,expense_date,created_at"
-      )
-      .gte(
-        "expense_date",
-        from
-      )
-      .lte(
-        "expense_date",
-        to
-      );
+  if (error) {
 
+    console.error(error);
 
-  const saleRows =
-    sales || [];
+    app.innerHTML = `
+      <div class="card">
+        Error loading reports.
+      </div>
+    `;
 
-  const expenseRows =
-    expenses || [];
-
-
-  const totalSales =
-    saleRows.reduce(
-      (sum, row) =>
-        sum +
-        Number(
-          row.total || 0
-        ),
-      0
-    );
-
-
-  const totalExpenses =
-    expenseRows.reduce(
-      (sum, row) =>
-        sum +
-        Number(
-          row.amount || 0
-        ),
-      0
-    );
-
-
-  // ----------------------------------------------------------
-  // Calculate approximate COGS from recipes
-  // ----------------------------------------------------------
-
-  let cogs = 0;
-
-
-  if (saleRows.length > 0) {
-
-    const saleIds =
-      saleRows.map(
-        row => row.id
-      );
-
-
-    const {
-      data: saleItems
-    } =
-      await supabase
-        .from("sale_items")
-        .select(
-          "sale_id,product_id,quantity"
-        )
-        .in(
-          "sale_id",
-          saleIds
-        );
-
-
-    const {
-      data: recipes
-    } =
-      await supabase
-        .from("recipes")
-        .select(
-          "product_id,ingredient_id,quantity"
-        );
-
-
-    const {
-      data: ingredients
-    } =
-      await supabase
-        .from("ingredients")
-        .select(
-          "id,cost_per_unit"
-        );
-
-
-    (saleItems || [])
-      .forEach(
-        item => {
-
-          const productRecipes =
-            (recipes || [])
-              .filter(
-                recipe =>
-                  recipe.product_id ===
-                  item.product_id
-              );
-
-          productRecipes
-            .forEach(
-              recipe => {
-
-                const ingredient =
-                  (ingredients || [])
-                    .find(
-                      i =>
-                        i.id ===
-                        recipe.ingredient_id
-                    );
-
-                if (!ingredient)
-                  return;
-
-                cogs +=
-
-                  Number(
-                    recipe.quantity || 0
-                  ) *
-
-                  Number(
-                    item.quantity || 0
-                  ) *
-
-                  Number(
-                    ingredient.cost_per_unit || 0
-                  );
-
-              }
-            );
-
-        }
-      );
+    return;
 
   }
 
 
-  const netProfit =
-    totalSales -
-    cogs -
-    totalExpenses;
+  const sales =
+    data || [];
 
 
-  const cashSales =
-    saleRows
-      .filter(
-        s =>
-          s.payment_method ===
-          "cash"
-      )
-      .reduce(
-        (sum, s) =>
-          sum +
-          Number(
-            s.total || 0
-          ),
-        0
-      );
+  const total =
+    sales.reduce(
+      (sum, sale) =>
+        sum +
+        Number(
+          sale.total || 0
+        ),
+      0
+    );
 
 
-  const cardSales =
-    saleRows
-      .filter(
-        s =>
-          s.payment_method ===
-          "card"
-      )
-      .reduce(
-        (sum, s) =>
-          sum +
-          Number(
-            s.total || 0
-          ),
-        0
-      );
-
-
-  result.innerHTML = `
+  app.innerHTML = `
 
     <div class="dashboard-grid">
 
@@ -4462,7 +2676,7 @@ async function generateReport() {
         </div>
 
         <div class="stat-value">
-          ${money(totalSales)}
+          ${money(total)}
         </div>
 
       </div>
@@ -4471,37 +2685,11 @@ async function generateReport() {
       <div class="stat-card">
 
         <div class="stat-title">
-          ${t("costOfGoods")}
+          ${t("totalOrders")}
         </div>
 
         <div class="stat-value">
-          ${money(cogs)}
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-title">
-          ${t("expenseReport")}
-        </div>
-
-        <div class="stat-value">
-          ${money(totalExpenses)}
-        </div>
-
-      </div>
-
-
-      <div class="stat-card">
-
-        <div class="stat-title">
-          ${t("netProfit")}
-        </div>
-
-        <div class="stat-value">
-          ${money(netProfit)}
+          ${sales.length}
         </div>
 
       </div>
@@ -4512,38 +2700,9 @@ async function generateReport() {
     <div class="card">
 
       <h2>
-        ${t("salesReport")}
+        ${t("reportsTitle")}
       </h2>
 
-      <p>
-        Cash:
-        <strong>
-          ${money(cashSales)}
-        </strong>
-      </p>
-
-      <p>
-        Card:
-        <strong>
-          ${money(cardSales)}
-        </strong>
-      </p>
-
-      <p>
-        Orders:
-        <strong>
-          ${saleRows.length}
-        </strong>
-      </p>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>
-        ${t("salesReport")}
-      </h2>
 
       <div class="table-wrap">
 
@@ -4553,9 +2712,17 @@ async function generateReport() {
 
             <tr>
 
-              <th>${t("date")}</th>
-              <th>${t("payment")}</th>
-              <th>${t("total")}</th>
+              <th>
+                Date
+              </th>
+
+              <th>
+                Payment
+              </th>
+
+              <th>
+                Total
+              </th>
 
             </tr>
 
@@ -4565,7 +2732,7 @@ async function generateReport() {
           <tbody>
 
             ${
-              saleRows
+              sales
                 .map(
                   sale => `
 
@@ -4604,80 +2771,13 @@ async function generateReport() {
 
     </div>
 
-
-    <div class="card">
-
-      <h2>
-        ${t("expenseReport")}
-      </h2>
-
-      <div class="table-wrap">
-
-        <table>
-
-          <thead>
-
-            <tr>
-
-              <th>${t("date")}</th>
-              <th>${t("description")}</th>
-              <th>${t("amount")}</th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            ${
-              expenseRows
-                .map(
-                  expense => `
-
-                    <tr>
-
-                      <td>
-                        ${escapeHTML(
-                          expense.expense_date
-                        )}
-                      </td>
-
-                      <td>
-                        ${escapeHTML(
-                          expense.description ||
-                          "-"
-                        )}
-                      </td>
-
-                      <td>
-                        ${money(
-                          expense.amount
-                        )}
-                      </td>
-
-                    </tr>
-
-                  `
-                )
-                .join("")
-            }
-
-          </tbody>
-
-        </table>
-
-      </div>
-
-    </div>
-
   `;
 
 }
 
 
 // ============================================================
-// EMPLOYEES
+// EMPLOYEES PAGE
 // ============================================================
 
 async function employeesPage() {
@@ -4687,16 +2787,20 @@ async function employeesPage() {
       "app"
     );
 
-  if (!app)
-    return;
+
+  if (!app) return;
+
 
   if (
     !currentProfile ||
     currentProfile.role !== "owner"
   ) {
 
-    app.innerHTML =
-      `<div class="card">Access denied.</div>`;
+    app.innerHTML = `
+      <div class="card">
+        Access denied.
+      </div>
+    `;
 
     return;
 
@@ -4704,23 +2808,31 @@ async function employeesPage() {
 
 
   const {
-    data: employees,
+    data,
     error
   } =
     await supabase
       .from("profiles")
       .select(
-        "id,username,full_name,role,language,active"
+        "id, username, full_name, role, language"
       )
       .order(
-        "full_name"
+        "full_name",
+        {
+          ascending: true
+        }
       );
 
 
   if (error) {
 
-    app.innerHTML =
-      `<div class="card">${error.message}</div>`;
+    console.error(error);
+
+    app.innerHTML = `
+      <div class="card">
+        Error loading employees.
+      </div>
+    `;
 
     return;
 
@@ -4736,14 +2848,6 @@ async function employeesPage() {
       </h2>
 
 
-      <p>
-        Employee Auth account එක මුලින් Supabase
-        Authentication වල create කරලා තිබිය යුතුයි.
-        මෙතැනින් ඒ account එකේ Profile / Role /
-        Language / Active status manage කරන්න පුළුවන්.
-      </p>
-
-
       <div class="table-wrap">
 
         <table>
@@ -4753,27 +2857,15 @@ async function employeesPage() {
             <tr>
 
               <th>
-                ${t("usernameCol")}
+                Username
               </th>
 
               <th>
-                ${t("nameCol")}
+                Name
               </th>
 
               <th>
-                ${t("role")}
-              </th>
-
-              <th>
-                ${t("languageCol")}
-              </th>
-
-              <th>
-                ${t("status")}
-              </th>
-
-              <th>
-                Action
+                Role
               </th>
 
             </tr>
@@ -4784,7 +2876,7 @@ async function employeesPage() {
           <tbody>
 
             ${
-              (employees || [])
+              (data || [])
                 .map(
                   person => `
 
@@ -4803,116 +2895,9 @@ async function employeesPage() {
                       </td>
 
                       <td>
-
-                        <select
-                          id="role-${person.id}"
-                          style="padding:7px;"
-                        >
-
-                          <option
-                            value="owner"
-                            ${
-                              person.role === "owner"
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            ${t("owner")}
-                          </option>
-
-                          <option
-                            value="employee"
-                            ${
-                              person.role === "employee"
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            ${t("employee")}
-                          </option>
-
-                        </select>
-
-                      </td>
-
-
-                      <td>
-
-                        <select
-                          id="lang-${person.id}"
-                          style="padding:7px;"
-                        >
-
-                          <option
-                            value="si"
-                            ${
-                              person.language === "si"
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            සිංහල
-                          </option>
-
-                          <option
-                            value="en"
-                            ${
-                              person.language === "en"
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            English
-                          </option>
-
-                        </select>
-
-                      </td>
-
-
-                      <td>
-
-                        <select
-                          id="active-${person.id}"
-                          style="padding:7px;"
-                        >
-
-                          <option
-                            value="true"
-                            ${
-                              person.active !== false
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            Active
-                          </option>
-
-                          <option
-                            value="false"
-                            ${
-                              person.active === false
-                                ? "selected"
-                                : ""
-                            }
-                          >
-                            Inactive
-                          </option>
-
-                        </select>
-
-                      </td>
-
-
-                      <td>
-
-                        <button
-                          class="primary-btn"
-                          onclick="updateEmployee('${person.id}')"
-                        >
-                          ${t("update")}
-                        </button>
-
+                        ${escapeHTML(
+                          person.role
+                        )}
                       </td>
 
                     </tr>
@@ -4935,77 +2920,8 @@ async function employeesPage() {
 }
 
 
-async function updateEmployee(
-  id
-) {
-
-  if (
-    !currentProfile ||
-    currentProfile.role !== "owner"
-  )
-    return;
-
-
-  const role =
-    document.getElementById(
-      `role-${id}`
-    ).value;
-
-  const lang =
-    document.getElementById(
-      `lang-${id}`
-    ).value;
-
-  const active =
-    document.getElementById(
-      `active-${id}`
-    ).value === "true";
-
-
-  const {
-    error
-  } =
-    await supabase
-      .from("profiles")
-      .update({
-
-        role:
-          role,
-
-        language:
-          lang,
-
-        active:
-          active
-
-      })
-      .eq(
-        "id",
-        id
-      );
-
-
-  if (error) {
-
-    alert(
-      error.message
-    );
-
-    return;
-
-  }
-
-  alert(
-    t("updated")
-  );
-
-  await employeesPage();
-
-}
-
-
 // ============================================================
-// SETTINGS
+// SETTINGS PAGE
 // ============================================================
 
 async function settingsPage() {
@@ -5015,8 +2931,9 @@ async function settingsPage() {
       "app"
     );
 
-  if (!app)
-    return;
+
+  if (!app) return;
+
 
   app.innerHTML = `
 
@@ -5061,388 +2978,7 @@ async function settingsPage() {
 
     </div>
 
-
-    <div class="card">
-
-      <h2>
-        ${t("welcome")}
-      </h2>
-
-      <p>
-        ${
-          currentProfile
-            ? escapeHTML(
-                currentProfile.full_name ||
-                currentProfile.username
-              )
-            : ""
-        }
-      </p>
-
-      <p>
-        Username:
-        ${
-          currentProfile
-            ? escapeHTML(
-                currentProfile.username
-              )
-            : ""
-        }
-      </p>
-
-      <p>
-        Role:
-        ${
-          currentProfile
-            ? escapeHTML(
-                currentProfile.role
-              )
-            : ""
-        }
-      </p>
-
-    </div>
-
   `;
-
-}
-
-
-// ============================================================
-// RECEIPT PRINT
-// ============================================================
-
-function printReceipt(
-  receiptData
-) {
-
-  if (!receiptData)
-    return;
-
-  const sale =
-    receiptData.sale;
-
-  const items =
-    receiptData.items || [];
-
-  const paid =
-    Number(
-      receiptData.customerPaid || 0
-    );
-
-  const change =
-    Number(
-      receiptData.change || 0
-    );
-
-
-  const itemHTML =
-    items
-      .map(
-        item => {
-
-          const name =
-            language === "en"
-              ? (
-                  item.name_en ||
-                  item.name_si
-                )
-              : (
-                  item.name_si ||
-                  item.name_en
-                );
-
-          const lineTotal =
-            Number(
-              item.selling_price
-            ) *
-            Number(
-              item.quantity
-            );
-
-          return `
-
-            <tr>
-
-              <td>
-                ${escapeHTML(name)}
-              </td>
-
-              <td style="text-align:center;">
-                ${item.quantity}
-              </td>
-
-              <td style="text-align:right;">
-                ${money(lineTotal)}
-              </td>
-
-            </tr>
-
-          `;
-
-        }
-      )
-      .join("");
-
-
-  const receiptNumber =
-    sale &&
-    sale.receipt_number
-      ? sale.receipt_number
-      : sale
-        ? sale.id
-        : "";
-
-
-  const receiptWindow =
-    window.open(
-      "",
-      "_blank",
-      "width=400,height=700"
-    );
-
-
-  if (!receiptWindow) {
-
-    alert(
-      "Popup blocked. Please allow popups."
-    );
-
-    return;
-
-  }
-
-
-  receiptWindow.document.write(`
-
-    <!doctype html>
-
-    <html>
-
-      <head>
-
-        <meta charset="utf-8">
-
-        <title>
-          අඹ සිසිල Receipt
-        </title>
-
-        <style>
-
-          body {
-            font-family:
-              Arial,
-              sans-serif;
-
-            width: 280px;
-
-            margin: 0 auto;
-
-            padding: 15px;
-
-            color: #000;
-          }
-
-          .center {
-            text-align:center;
-          }
-
-          h2 {
-            margin: 0 0 5px;
-          }
-
-          p {
-            margin: 4px 0;
-            font-size: 13px;
-          }
-
-          table {
-            width:100%;
-            border-collapse:collapse;
-            margin-top:12px;
-            font-size:12px;
-          }
-
-          th,
-          td {
-            padding:5px 2px;
-            border-bottom:1px dashed #999;
-          }
-
-          .total {
-            font-size:17px;
-            font-weight:bold;
-          }
-
-          .line {
-            border-top:1px dashed #000;
-            margin:10px 0;
-          }
-
-          @media print {
-
-            body {
-              width:280px;
-            }
-
-          }
-
-        </style>
-
-      </head>
-
-
-      <body>
-
-        <div class="center">
-
-          <h2>
-            අඹ සිසිල
-          </h2>
-
-          <p>
-            Receipt #${escapeHTML(
-              receiptNumber
-            )}
-          </p>
-
-          <p>
-            ${formatDate(
-              sale
-                ? sale.created_at
-                : new Date()
-            )}
-          </p>
-
-        </div>
-
-
-        <div class="line"></div>
-
-
-        <table>
-
-          <thead>
-
-            <tr>
-
-              <th>
-                Item
-              </th>
-
-              <th>
-                Qty
-              </th>
-
-              <th>
-                Amount
-              </th>
-
-            </tr>
-
-          </thead>
-
-
-          <tbody>
-
-            ${itemHTML}
-
-          </tbody>
-
-        </table>
-
-
-        <div class="line"></div>
-
-
-        <p>
-          ${t("subtotal")}:
-          <strong>
-            ${money(
-              sale
-                ? sale.subtotal
-                : getPOSCartTotal()
-            )}
-          </strong>
-        </p>
-
-
-        <p class="total">
-
-          ${t("total")}:
-          ${money(
-            sale
-              ? sale.total
-              : 0
-          )}
-
-        </p>
-
-
-        <p>
-
-          ${t("payment")}:
-          ${
-            sale
-              ? escapeHTML(
-                  sale.payment_method
-                )
-              : ""
-          }
-
-        </p>
-
-
-        <p>
-
-          ${t("customerPayment")}:
-          ${money(paid)}
-
-        </p>
-
-
-        <p>
-
-          ${t("receiptChange")}:
-          ${money(change)}
-
-        </p>
-
-
-        <div class="line"></div>
-
-
-        <div class="center">
-
-          <p>
-            Thank you!
-          </p>
-
-          <p>
-            අඹ සිසිල
-          </p>
-
-        </div>
-
-
-        <script>
-
-          window.onload = function() {
-
-            window.print();
-
-          };
-
-        </script>
-
-      </body>
-
-    </html>
-
-  `);
-
-
-  receiptWindow.document.close();
 
 }
 
@@ -5458,10 +2994,12 @@ async function forgotPassword() {
       "loginUsername"
     );
 
+
   const message =
     document.getElementById(
       "loginMessage"
     );
+
 
   const username =
     usernameInput
@@ -5471,11 +3009,14 @@ async function forgotPassword() {
 
   if (!username) {
 
-    if (message)
+    if (message) {
+
       message.textContent =
         language === "en"
           ? "Enter your username first."
           : "මුලින් Username එක ඇතුළත් කරන්න.";
+
+    }
 
     return;
 
@@ -5485,7 +3026,7 @@ async function forgotPassword() {
   try {
 
     const {
-      data: email,
+      data,
       error
     } =
       await supabase.rpc(
@@ -5496,17 +3037,30 @@ async function forgotPassword() {
         }
       );
 
-    if (error)
+
+    if (error) {
+
       throw error;
 
-    if (!email)
+    }
+
+
+    const email =
+      data;
+
+
+    if (!email) {
+
       throw new Error(
         "Username not found"
       );
 
+    }
+
 
     const {
-      error: resetError
+      error:
+        resetError
     } =
       await supabase.auth
         .resetPasswordForEmail(
@@ -5518,8 +3072,11 @@ async function forgotPassword() {
         );
 
 
-    if (resetError)
+    if (resetError) {
+
       throw resetError;
+
+    }
 
 
     alert(
@@ -5532,14 +3089,19 @@ async function forgotPassword() {
   } catch (error) {
 
     console.error(
+      "Password reset error:",
       error
     );
 
-    if (message)
+
+    if (message) {
+
       message.textContent =
         language === "en"
           ? "Password reset failed."
           : "Password reset කරන්න බැරි වුණා.";
+
+    }
 
   }
 
@@ -5547,7 +3109,7 @@ async function forgotPassword() {
 
 
 // ============================================================
-// SESSION
+// SESSION CHECK
 // ============================================================
 
 async function checkSession() {
@@ -5555,11 +3117,12 @@ async function checkSession() {
   const {
     data
   } =
-    await supabase.auth
-      .getSession();
+    await supabase.auth.getSession();
+
 
   const session =
     data.session;
+
 
   if (!session) {
 
@@ -5588,6 +3151,7 @@ async function checkSession() {
 
     updateHeader();
 
+
     await show(
       currentProfile &&
       currentProfile.role === "employee"
@@ -5595,9 +3159,11 @@ async function checkSession() {
         : "dashboard"
     );
 
+
   } catch (error) {
 
     console.error(
+      "Session profile error:",
       error
     );
 
@@ -5615,11 +3181,11 @@ async function checkSession() {
 
 
 // ============================================================
-// AUTH STATE
+// AUTH STATE LISTENER
 // ============================================================
 
 supabase.auth.onAuthStateChange(
-  (
+  async (
     event,
     session
   ) => {
@@ -5638,6 +3204,7 @@ supabase.auth.onAuthStateChange(
 
     }
 
+
     if (
       event === "SIGNED_IN" &&
       session
@@ -5653,7 +3220,42 @@ supabase.auth.onAuthStateChange(
 
 
 // ============================================================
-// NAVIGATION CLICK
+// LOGIN ENTER KEY
+// ============================================================
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key === "Enter"
+    ) {
+
+      const loginScreen =
+        document.getElementById(
+          "loginScreen"
+        );
+
+
+      if (
+        loginScreen &&
+        !loginScreen.classList.contains(
+          "app-hidden"
+        )
+      ) {
+
+        loginUser();
+
+      }
+
+    }
+
+  }
+);
+
+
+// ============================================================
+// NAVIGATION BUTTONS
 // ============================================================
 
 document.addEventListener(
@@ -5665,45 +3267,17 @@ document.addEventListener(
         "[data-page]"
       );
 
-    if (!button)
-      return;
+
+    if (!button) return;
+
 
     const page =
       button.dataset.page;
 
-    if (page)
+
+    if (page) {
+
       show(page);
-
-  }
-);
-
-
-// ============================================================
-// ENTER KEY LOGIN
-// ============================================================
-
-document.addEventListener(
-  "keydown",
-  event => {
-
-    if (
-      event.key !== "Enter"
-    )
-      return;
-
-    const loginScreen =
-      document.getElementById(
-        "loginScreen"
-      );
-
-    if (
-      loginScreen &&
-      !loginScreen.classList.contains(
-        "app-hidden"
-      )
-    ) {
-
-      loginUser();
 
     }
 
@@ -5719,10 +3293,12 @@ document.addEventListener(
   "DOMContentLoaded",
   async () => {
 
+    // Login button
     const loginButton =
       document.getElementById(
         "loginButton"
       );
+
 
     if (loginButton) {
 
@@ -5734,10 +3310,12 @@ document.addEventListener(
     }
 
 
+    // Logout button
     const logoutButton =
       document.getElementById(
         "logoutButton"
       );
+
 
     if (logoutButton) {
 
@@ -5749,10 +3327,12 @@ document.addEventListener(
     }
 
 
+    // Forgot password
     const forgotButton =
       document.getElementById(
         "forgotPasswordButton"
       );
+
 
     if (forgotButton) {
 
@@ -5764,6 +3344,7 @@ document.addEventListener(
     }
 
 
+    // Check existing session
     await checkSession();
 
   }
@@ -5788,9 +3369,6 @@ window.show =
 
 window.setLang =
   setLang;
-
-window.dashboard =
-  dashboard;
 
 window.posPage =
   posPage;
@@ -5819,69 +3397,5 @@ window.clearPOSCart =
 window.completePOSSale =
   completePOSSale;
 
-window.productsPage =
-  productsPage;
 
-window.saveProduct =
-  saveProduct;
-
-window.editProduct =
-  editProduct;
-
-window.toggleProduct =
-  toggleProduct;
-
-window.resetProductForm =
-  resetProductForm;
-
-window.saveCategory =
-  saveCategory;
-
-window.stockPage =
-  stockPage;
-
-window.saveIngredient =
-  saveIngredient;
-
-window.editIngredient =
-  editIngredient;
-
-window.resetIngredientForm =
-  resetIngredientForm;
-
-window.addStock =
-  addStock;
-
-window.saveRecipe =
-  saveRecipe;
-
-window.deleteRecipe =
-  deleteRecipe;
-
-window.expensesPage =
-  expensesPage;
-
-window.saveExpense =
-  saveExpense;
-
-window.deleteExpense =
-  deleteExpense;
-
-window.reportsPage =
-  reportsPage;
-
-window.generateReport =
-  generateReport;
-
-window.employeesPage =
-  employeesPage;
-
-window.updateEmployee =
-  updateEmployee;
-
-window.settingsPage =
-  settingsPage;
-
-window.printReceipt =
-  printReceipt;
 
