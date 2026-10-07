@@ -1,1 +1,446 @@
-*{box-sizing:border-box}body{margin:0;font-family:Arial,"Noto Sans Sinhala",sans-serif;background:#f4f7f5;color:#183027}aside{position:fixed;left:0;top:0;bottom:0;width:240px;background:#174b34;color:#fff;padding:20px 14px;z-index:5}.brand{font-size:20px;margin-bottom:25px}.brand small{display:block;font-size:11px;opacity:.65;margin-left:29px}nav{display:grid;gap:6px}nav button{border:0;background:transparent;color:white;text-align:left;padding:12px;border-radius:9px;cursor:pointer}nav button:hover{background:#286448}main{margin-left:240px;min-height:100vh}header{height:78px;background:white;border-bottom:1px solid #ddd;display:flex;align-items:center;padding:12px 22px;gap:15px}header h1{margin:0;font-size:22px}header small{color:#718078}#lang{margin-left:auto;padding:9px;border:1px solid #ccd6d0;border-radius:8px}.hamb{display:none;border:0;background:none;font-size:24px}section{padding:22px}.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card,.panel{background:white;border:1px solid #e1e8e4;border-radius:13px;padding:17px}.card small{color:#68776f}.num{font-size:25px;font-weight:700;margin-top:8px}.grid{display:grid;grid-template-columns:1.3fr 1fr;gap:15px;margin-top:15px}.btn{background:#176542;color:white;border:0;border-radius:8px;padding:10px 14px;cursor:pointer}.btn.alt{background:#e8efeb;color:#174b34}.table{width:100%;border-collapse:collapse}.table th,.table td{text-align:left;padding:10px;border-bottom:1px solid #edf0ee}.field{margin:10px 0}.field label{display:block;font-size:13px;margin-bottom:5px}.field input,.field select{width:100%;padding:10px;border:1px solid #ccd6d0;border-radius:8px}.form{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.empty{text-align:center;padding:25px;color:#75827b}.low{color:#a33131;font-weight:bold}.pill{background:#e9f5ed;color:#276246;padding:4px 8px;border-radius:99px;font-size:12px}@media(max-width:800px){aside{transform:translateX(-100%);transition:.2s}aside.open{transform:translateX(0)}main{margin-left:0}.hamb{display:block}.cards{grid-template-columns:1fr 1fr}.grid{grid-template-columns:1fr}.form{grid-template-columns:1fr}section{padding:14px}}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, "Noto Sans Sinhala", sans-serif;
+  background: #f4f7f5;
+  color: #183027;
+}
+
+
+/* ============================================================
+   HIDDEN
+   ============================================================ */
+
+.app-hidden {
+  display: none !important;
+}
+
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+
+aside {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 240px;
+  background: #174b34;
+  color: #fff;
+  padding: 20px 14px;
+  z-index: 5;
+}
+
+.brand {
+  font-size: 20px;
+  margin-bottom: 25px;
+}
+
+.brand small {
+  display: block;
+  font-size: 11px;
+  opacity: .65;
+  margin-left: 29px;
+}
+
+nav {
+  display: grid;
+  gap: 6px;
+}
+
+nav button {
+  border: 0;
+  background: transparent;
+  color: white;
+  text-align: left;
+  padding: 12px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
+nav button:hover {
+  background: #286448;
+}
+
+
+/* ============================================================
+   MAIN
+   ============================================================ */
+
+main {
+  margin-left: 240px;
+  min-height: 100vh;
+}
+
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+header {
+  height: 78px;
+  background: white;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  padding: 12px 22px;
+  gap: 15px;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 22px;
+}
+
+header small {
+  color: #718078;
+}
+
+#lang {
+  margin-left: auto;
+  padding: 9px;
+  border: 1px solid #ccd6d0;
+  border-radius: 8px;
+}
+
+.hamb {
+  display: none;
+  border: 0;
+  background: none;
+  font-size: 24px;
+}
+
+
+/* ============================================================
+   CONTENT
+   ============================================================ */
+
+section {
+  padding: 22px;
+}
+
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.card,
+.panel {
+  background: white;
+  border: 1px solid #e1e8e4;
+  border-radius: 13px;
+  padding: 17px;
+}
+
+.card small {
+  color: #68776f;
+}
+
+.num {
+  font-size: 25px;
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+
+.btn {
+  background: #176542;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  opacity: .9;
+}
+
+.btn.alt {
+  background: #e8efeb;
+  color: #174b34;
+}
+
+
+/* ============================================================
+   TABLE
+   ============================================================ */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #edf0ee;
+}
+
+
+/* ============================================================
+   FORMS
+   ============================================================ */
+
+.field {
+  margin: 10px 0;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+
+.field input,
+.field select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccd6d0;
+  border-radius: 8px;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+
+/* ============================================================
+   EMPTY / STATUS
+   ============================================================ */
+
+.empty {
+  text-align: center;
+  padding: 25px;
+  color: #75827b;
+}
+
+.low {
+  color: #a33131;
+  font-weight: bold;
+}
+
+.pill {
+  background: #e9f5ed;
+  color: #276246;
+  padding: 4px 8px;
+  border-radius: 99px;
+  font-size: 12px;
+}
+
+
+/* ============================================================
+   LOGIN SCREEN
+   ============================================================ */
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #f4f7f5;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 390px;
+  background: white;
+  border: 1px solid #e1e8e4;
+  border-radius: 16px;
+  padding: 30px;
+  box-shadow: 0 10px 35px rgba(23, 75, 52, .08);
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.login-brand h1 {
+  margin: 8px 0 3px;
+  font-size: 28px;
+  color: #174b34;
+}
+
+.login-brand small {
+  margin-left: 0;
+  color: #718078;
+  opacity: 1;
+}
+
+.login-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.forgot-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  border: 0;
+  background: transparent;
+  color: #176542;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.forgot-btn:hover {
+  text-decoration: underline;
+}
+
+.login-message {
+  min-height: 22px;
+  margin-top: 14px;
+  text-align: center;
+  font-size: 13px;
+  color: #a33131;
+}
+
+
+/* ============================================================
+   USER AREA
+   ============================================================ */
+
+.user-area {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#currentUser {
+  font-size: 13px;
+  color: #52645b;
+}
+
+
+/* ============================================================
+   POS
+   ============================================================ */
+
+.pos-placeholder {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+
+/* ============================================================
+   SETTINGS
+   ============================================================ */
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 0;
+  border-bottom: 1px solid #edf0ee;
+}
+
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 800px) {
+
+  aside {
+    transform: translateX(-100%);
+    transition: .2s;
+  }
+
+  aside.open {
+    transform: translateX(0);
+  }
+
+  main {
+    margin-left: 0;
+  }
+
+  .hamb {
+    display: block;
+  }
+
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  section {
+    padding: 14px;
+  }
+
+  .user-area {
+    gap: 6px;
+  }
+
+  #currentUser {
+    display: none;
+  }
+
+  .pos-placeholder {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+/* ============================================================
+   SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 480px) {
+
+  header {
+    padding: 12px 14px;
+  }
+
+  header h1 {
+    font-size: 18px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .login-box {
+    padding: 24px 20px;
+  }
+
+}
