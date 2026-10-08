@@ -18,13 +18,14 @@ const SUPABASE_URL =
 // Service Role / Secret Key එක දාන්න එපා.
 
 const SUPABASE_PUBLISHABLE_KEY =
-  "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
+  "YOUR_EXISTING_PUBLISHABLE_KEY";
 
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+const supabase =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
 
 
 // ============================================================
@@ -100,9 +101,7 @@ const dict = {
     saleFailed: "බිල්පත අවසන් කරන්න බැරි වුණා.",
     paymentNotEnough: "Customer දුන් මුදල ප්‍රමාණවත් නැහැ.",
     loginAgain: "කරුණාකර නැවත Login වෙන්න.",
-    cartEmptyError: "බිල්පත හිස්.",
-
-    language: "භාෂාව"
+    cartEmptyError: "බිල්පත හිස්."
 
   },
 
@@ -161,9 +160,7 @@ const dict = {
     saleFailed: "Sale could not be completed.",
     paymentNotEnough: "Customer payment is not enough.",
     loginAgain: "Please login again.",
-    cartEmptyError: "Cart is empty.",
-
-    language: "Language"
+    cartEmptyError: "Cart is empty."
 
   }
 
@@ -171,7 +168,7 @@ const dict = {
 
 
 // ============================================================
-// TRANSLATION HELPER
+// TRANSLATION
 // ============================================================
 
 function t(key) {
@@ -233,7 +230,8 @@ function formatDate(value) {
 
   if (!value) return "-";
 
-  const date = new Date(value);
+  const date =
+    new Date(value);
 
   return date.toLocaleString(
     "en-LK",
@@ -247,7 +245,7 @@ function formatDate(value) {
 
 
 // ============================================================
-// LOGIN SCREEN
+// SHOW LOGIN
 // ============================================================
 
 function showLogin() {
@@ -280,7 +278,7 @@ function showLogin() {
 
 
 // ============================================================
-// APP SCREEN
+// SHOW APP
 // ============================================================
 
 function showApp() {
@@ -316,7 +314,16 @@ function showApp() {
 // LOGIN
 // ============================================================
 
-async function loginUser() {
+async function loginUser(event) {
+
+  if (event) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+  }
+
 
   const usernameInput =
     document.getElementById(
@@ -350,67 +357,27 @@ async function loginUser() {
     if (message) {
 
       message.textContent =
-        language === "en"
-          ? "Enter username and password."
-          : "Username සහ Password ඇතුළත් කරන්න.";
-
-    }
-
-    return;
-  }
-
-
-  if (message) {
-
-    message.textContent =
-// ============================================================
-// LOGIN
-// ============================================================
-
-async function loginUser() {
-
-  const usernameInput =
-    document.getElementById("loginUsername");
-
-  const passwordInput =
-    document.getElementById("loginPassword");
-
-  const message =
-    document.getElementById("loginMessage");
-
-
-  const username =
-    usernameInput
-      ? usernameInput.value.trim()
-      : "";
-
-  const password =
-    passwordInput
-      ? passwordInput.value
-      : "";
-
-
-  if (!username || !password) {
-
-    if (message) {
-      message.textContent =
         "Username සහ Password ඇතුළත් කරන්න.";
+
     }
 
     return;
+
   }
 
 
   if (message) {
+
     message.textContent =
       "Login වෙමින්...";
+
   }
 
 
   try {
 
     // --------------------------------------------------------
-    // STEP 1 - Username → Email
+    // Username → Email
     // --------------------------------------------------------
 
     const {
@@ -426,12 +393,12 @@ async function loginUser() {
 
 
     console.log(
-      "Username:",
+      "Username lookup:",
       username
     );
 
     console.log(
-      "Email from RPC:",
+      "Email returned:",
       email
     );
 
@@ -461,12 +428,12 @@ async function loginUser() {
 
 
     // --------------------------------------------------------
-    // STEP 2 - Supabase Login
+    // Supabase Auth
     // --------------------------------------------------------
 
     const {
-      data,
-      error: loginError
+      data: authData,
+      error: authError
     } =
       await supabase.auth.signInWithPassword({
 
@@ -478,47 +445,50 @@ async function loginUser() {
 
 
     console.log(
-      "Login response:",
-      data
+      "Auth response:",
+      authData
     );
 
 
-    if (loginError) {
+    if (authError) {
 
       console.error(
-        "Supabase login error:",
-        loginError
+        "Authentication error:",
+        authError
       );
 
       throw new Error(
-        loginError.message
+        authError.message
       );
 
     }
 
 
-    if (!data || !data.user) {
+    if (
+      !authData ||
+      !authData.user
+    ) {
 
       throw new Error(
-        "Login successful, but user data was not returned."
+        "Login succeeded but user data is missing."
       );
 
     }
 
 
     currentUser =
-      data.user;
+      authData.user;
 
 
     // --------------------------------------------------------
-    // STEP 3 - Load Profile
+    // Load Profile
     // --------------------------------------------------------
 
     await loadProfile();
 
 
     console.log(
-      "Current profile:",
+      "Loaded profile:",
       currentProfile
     );
 
@@ -526,14 +496,14 @@ async function loginUser() {
     if (!currentProfile) {
 
       throw new Error(
-        "Login successful, but profile was not found."
+        "User profile was not found."
       );
 
     }
 
 
     // --------------------------------------------------------
-    // STEP 4 - Open App
+    // Open App
     // --------------------------------------------------------
 
     showApp();
@@ -543,23 +513,33 @@ async function loginUser() {
     updateHeader();
 
 
-    const firstPage =
-      currentProfile.role === "employee"
-        ? "pos"
-        : "dashboard";
+    if (
+      currentProfile.role ===
+      "employee"
+    ) {
+
+      await show("pos");
+
+    } else {
+
+      await show("dashboard");
+
+    }
 
 
-    await show(firstPage);
+    // Clear password
 
-
-    // Clear password field
     if (passwordInput) {
+
       passwordInput.value = "";
+
     }
 
 
     if (message) {
+
       message.textContent = "";
+
     }
 
 
@@ -660,9 +640,28 @@ async function loadProfile() {
 // LOGOUT
 // ============================================================
 
-async function logoutUser() {
+async function logoutUser(event) {
 
-  await supabase.auth.signOut();
+  if (event) {
+
+    event.preventDefault();
+
+  }
+
+
+  try {
+
+    await supabase.auth.signOut();
+
+  } catch (error) {
+
+    console.error(
+      "Logout error:",
+      error
+    );
+
+  }
+
 
   currentUser = null;
 
@@ -674,6 +673,7 @@ async function logoutUser() {
 
   selectedPaymentMethod =
     "cash";
+
 
   showLogin();
 
@@ -687,6 +687,7 @@ async function logoutUser() {
 function applyRolePermissions() {
 
   const ownerOnlyMenus = [
+
     "dashboardMenu",
     "productsMenu",
     "stockMenu",
@@ -694,6 +695,7 @@ function applyRolePermissions() {
     "reportsMenu",
     "employeesMenu",
     "settingsMenu"
+
   ];
 
 
@@ -702,25 +704,28 @@ function applyRolePermissions() {
     currentProfile.role === "owner";
 
 
-  ownerOnlyMenus.forEach(id => {
+  ownerOnlyMenus.forEach(
+    id => {
 
-    const element =
-      document.getElementById(id);
-
-    if (!element) return;
+      const element =
+        document.getElementById(id);
 
 
-    if (isOwner) {
+      if (!element) return;
 
-      element.style.display = "";
 
-    } else {
+      if (isOwner) {
 
-      element.style.display = "none";
+        element.style.display = "";
+
+      } else {
+
+        element.style.display = "none";
+
+      }
 
     }
-
-  });
+  );
 
 
   const posMenu =
@@ -749,13 +754,15 @@ function updateHeader() {
       "currentUser"
     );
 
+
   if (userElement) {
 
     userElement.textContent =
       currentProfile
         ? (
             currentProfile.full_name ||
-            currentProfile.username
+            currentProfile.username ||
+            ""
           )
         : "";
 
@@ -766,6 +773,7 @@ function updateHeader() {
     document.getElementById(
       "lang"
     );
+
 
   if (langElement) {
 
@@ -781,6 +789,7 @@ function updateHeader() {
     document.getElementById(
       "date"
     );
+
 
   if (dateElement) {
 
@@ -809,11 +818,14 @@ async function setLang(lang) {
     lang !== "si" &&
     lang !== "en"
   ) {
+
     return;
+
   }
 
 
-  language = lang;
+  language =
+    lang;
 
 
   localStorage.setItem(
@@ -867,7 +879,8 @@ async function show(page) {
   // Employees can ONLY access POS
 
   if (
-    currentProfile.role === "employee" &&
+    currentProfile.role ===
+      "employee" &&
     page !== "pos"
   ) {
 
@@ -928,13 +941,15 @@ async function show(page) {
     .querySelectorAll(
       ".nav-btn"
     )
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.classList.remove(
-        "active"
-      );
+        button.classList.remove(
+          "active"
+        );
 
-    });
+      }
+    );
 
 
   const activeButton =
@@ -1045,19 +1060,21 @@ async function dashboard() {
   // Sales
   // ----------------------------------------------------------
 
-  let salesQuery =
-    supabase
-      .from("sales")
-      .select(
-        "id, total, payment_method, created_at"
-      );
-
-
   const {
     data: sales,
     error: salesError
   } =
-    await salesQuery;
+    await supabase
+      .from("sales")
+      .select(
+        "id, total, payment_method, created_at"
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
 
 
   if (salesError) {
@@ -1076,7 +1093,10 @@ async function dashboard() {
 
   const totalSales =
     saleRows.reduce(
-      (sum, sale) =>
+      (
+        sum,
+        sale
+      ) =>
         sum +
         Number(
           sale.total || 0
@@ -1088,6 +1108,7 @@ async function dashboard() {
   const today =
     new Date();
 
+
   today.setHours(
     0,
     0,
@@ -1098,18 +1119,23 @@ async function dashboard() {
 
   const todaySales =
     saleRows
-      .filter(sale => {
+      .filter(
+        sale => {
 
-        const d =
-          new Date(
-            sale.created_at
-          );
+          const d =
+            new Date(
+              sale.created_at
+            );
 
-        return d >= today;
+          return d >= today;
 
-      })
+        }
+      )
       .reduce(
-        (sum, sale) =>
+        (
+          sum,
+          sale
+        ) =>
           sum +
           Number(
             sale.total || 0
@@ -1123,7 +1149,8 @@ async function dashboard() {
   // ----------------------------------------------------------
 
   const {
-    count: productCount
+    count: productCount,
+    error: productError
   } =
     await supabase
       .from("products")
@@ -1140,26 +1167,19 @@ async function dashboard() {
       );
 
 
-  // ----------------------------------------------------------
-  // Low stock
-  // ----------------------------------------------------------
+  if (productError) {
 
-  const {
-    data: lowStock
-  } =
-    await supabase
-      .from("ingredients")
-      .select(
-        "id, name, current_stock, min_stock"
-      )
-      .lte(
-        "current_stock",
-        supabase
-          ? 0
-          : 0
-      )
-      .limit(5);
+    console.error(
+      "Product count error:",
+      productError
+    );
 
+  }
+
+
+  // ----------------------------------------------------------
+  // Dashboard
+  // ----------------------------------------------------------
 
   app.innerHTML = `
 
@@ -1225,10 +1245,14 @@ async function dashboard() {
         ${t("recentSales")}
       </h2>
 
+
       ${
         saleRows.length === 0
+
           ? `<p>${t("noData")}</p>`
+
           : `
+
             <div class="table-wrap">
 
               <table>
@@ -1236,42 +1260,59 @@ async function dashboard() {
                 <thead>
 
                   <tr>
-                    <th>Date</th>
-                    <th>Payment</th>
-                    <th>Total</th>
+
+                    <th>
+                      Date
+                    </th>
+
+                    <th>
+                      Payment
+                    </th>
+
+                    <th>
+                      Total
+                    </th>
+
                   </tr>
 
                 </thead>
+
 
                 <tbody>
 
                   ${
                     saleRows
-                      .slice(-10)
-                      .reverse()
-                      .map(sale => `
-                        <tr>
+                      .slice(
+                        0,
+                        10
+                      )
+                      .map(
+                        sale => `
 
-                          <td>
-                            ${formatDate(
-                              sale.created_at
-                            )}
-                          </td>
+                          <tr>
 
-                          <td>
-                            ${escapeHTML(
-                              sale.payment_method
-                            )}
-                          </td>
+                            <td>
+                              ${formatDate(
+                                sale.created_at
+                              )}
+                            </td>
 
-                          <td>
-                            ${money(
-                              sale.total
-                            )}
-                          </td>
+                            <td>
+                              ${escapeHTML(
+                                sale.payment_method
+                              )}
+                            </td>
 
-                        </tr>
-                      `)
+                            <td>
+                              ${money(
+                                sale.total
+                              )}
+                            </td>
+
+                          </tr>
+
+                        `
+                      )
                       .join("")
                   }
 
@@ -1280,6 +1321,7 @@ async function dashboard() {
               </table>
 
             </div>
+
           `
       }
 
@@ -1342,10 +1384,6 @@ async function loadPOSProducts() {
       error
     );
 
-    alert(
-      "Products load karanna bari una."
-    );
-
     return;
 
   }
@@ -1402,49 +1440,51 @@ function renderPOS() {
 
     productHTML =
       posProducts
-        .map(product => {
+        .map(
+          product => {
 
-          const productName =
-            language === "en"
-              ? (
-                  product.name_en ||
-                  product.name_si
-                )
-              : (
-                  product.name_si ||
-                  product.name_en
-                );
-
-
-          return `
-
-            <button
-              class="pos-product"
-              onclick="addToPOSCart('${product.id}')"
-            >
-
-              <div class="pos-product-name">
-
-                ${escapeHTML(
-                  productName
-                )}
-
-              </div>
+            const productName =
+              language === "en"
+                ? (
+                    product.name_en ||
+                    product.name_si
+                  )
+                : (
+                    product.name_si ||
+                    product.name_en
+                  );
 
 
-              <div class="pos-product-price">
+            return `
 
-                ${money(
-                  product.selling_price
-                )}
+              <button
+                class="pos-product"
+                onclick="addToPOSCart('${product.id}')"
+              >
 
-              </div>
+                <div class="pos-product-name">
 
-            </button>
+                  ${escapeHTML(
+                    productName
+                  )}
 
-          `;
+                </div>
 
-        })
+
+                <div class="pos-product-price">
+
+                  ${money(
+                    product.selling_price
+                  )}
+
+                </div>
+
+              </button>
+
+            `;
+
+          }
+        )
         .join("");
 
   }
@@ -1472,7 +1512,10 @@ function renderPOS() {
     cartHTML =
       posCart
         .map(
-          (item, index) => {
+          (
+            item,
+            index
+          ) => {
 
             const productName =
               language === "en"
@@ -1498,7 +1541,6 @@ function renderPOS() {
             return `
 
               <div class="pos-cart-item">
-
 
                 <div class="pos-cart-info">
 
@@ -1649,6 +1691,7 @@ function renderPOS() {
         ${
           paid >= total &&
           total > 0
+
             ? `
 
               <div
@@ -1664,16 +1707,14 @@ function renderPOS() {
                 <strong>
 
                   ${t("change")}:
-
-                  ${money(
-                    change
-                  )}
+                  ${money(change)}
 
                 </strong>
 
               </div>
 
             `
+
             : ""
         }
 
@@ -1681,6 +1722,7 @@ function renderPOS() {
         ${
           paid < total &&
           paid > 0
+
             ? `
 
               <div
@@ -1696,16 +1738,14 @@ function renderPOS() {
                 <strong>
 
                   ${t("remaining")}:
-
-                  ${money(
-                    remaining
-                  )}
+                  ${money(remaining)}
 
                 </strong>
 
               </div>
 
             `
+
             : ""
         }
 
@@ -1788,7 +1828,6 @@ function renderPOS() {
 
           <div class="payment-buttons">
 
-
             <button
               class="${
                 selectedPaymentMethod === "cash"
@@ -1797,9 +1836,7 @@ function renderPOS() {
               }"
               onclick="selectPOSPayment('cash')"
             >
-
               ${t("cash")}
-
             </button>
 
 
@@ -1811,11 +1848,8 @@ function renderPOS() {
               }"
               onclick="selectPOSPayment('card')"
             >
-
               ${t("card")}
-
             </button>
-
 
           </div>
 
@@ -1829,19 +1863,14 @@ function renderPOS() {
             ${
               posCart.length === 0 ||
               (
-                selectedPaymentMethod ===
-                "cash" &&
-                Number(
-                  customerPaid
-                ) < total
+                selectedPaymentMethod === "cash" &&
+                Number(customerPaid) < total
               )
                 ? "disabled"
                 : ""
             }
           >
-
             ${t("completeSale")}
-
           </button>
 
 
@@ -1854,9 +1883,7 @@ function renderPOS() {
                 : ""
             }
           >
-
             ${t("clearBill")}
-
           </button>
 
 
@@ -1875,9 +1902,7 @@ function renderPOS() {
 // ADD TO CART
 // ============================================================
 
-function addToPOSCart(
-  productId
-) {
+function addToPOSCart(productId) {
 
   const product =
     posProducts.find(
@@ -1891,8 +1916,7 @@ function addToPOSCart(
   const existing =
     posCart.find(
       item =>
-        item.product_id ===
-        productId
+        item.product_id === productId
     );
 
 
@@ -1967,9 +1991,7 @@ function changePOSQty(
 // REMOVE ITEM
 // ============================================================
 
-function removePOSItem(
-  index
-) {
+function removePOSItem(index) {
 
   if (!posCart[index]) return;
 
@@ -2018,9 +2040,7 @@ function getPOSCartTotal() {
 // SELECT PAYMENT
 // ============================================================
 
-function selectPOSPayment(
-  method
-) {
+function selectPOSPayment(method) {
 
   selectedPaymentMethod =
     method;
@@ -2044,9 +2064,7 @@ function selectPOSPayment(
 // CUSTOMER PAID
 // ============================================================
 
-function updateCustomerPaid(
-  value
-) {
+function updateCustomerPaid(value) {
 
   customerPaid =
     Number(value) || 0;
@@ -2135,8 +2153,7 @@ async function completePOSSale() {
 
 
   if (
-    selectedPaymentMethod ===
-    "cash" &&
+    selectedPaymentMethod === "cash" &&
     paid < total
   ) {
 
@@ -2160,30 +2177,7 @@ async function completePOSSale() {
   }
 
 
-  const buttons =
-    document.querySelectorAll(
-      ".pos-complete-btn"
-    );
-
-
-  buttons.forEach(
-    button => {
-
-      button.disabled =
-        true;
-
-      button.innerText =
-        t("saving");
-
-    }
-  );
-
-
   try {
-
-    // --------------------------------------------------------
-    // Prepare cart
-    // --------------------------------------------------------
 
     const saleItems =
       posCart.map(
@@ -2200,10 +2194,6 @@ async function completePOSSale() {
         })
       );
 
-
-    // --------------------------------------------------------
-    // Call Supabase RPC
-    // --------------------------------------------------------
 
     const {
       data,
@@ -2228,30 +2218,16 @@ async function completePOSSale() {
 
     if (error) {
 
-      console.error(
-        "Complete sale error:",
-        error
-      );
-
       throw error;
 
     }
 
 
-    const saleId =
-      data;
-
-
     const change =
-      selectedPaymentMethod ===
-      "cash"
+      selectedPaymentMethod === "cash"
         ? paid - total
         : 0;
 
-
-    // --------------------------------------------------------
-    // Success
-    // --------------------------------------------------------
 
     alert(
 
@@ -2274,13 +2250,9 @@ async function completePOSSale() {
 
     console.log(
       "Sale completed:",
-      saleId
+      data
     );
 
-
-    // --------------------------------------------------------
-    // Reset POS
-    // --------------------------------------------------------
 
     posCart = [];
 
@@ -2334,6 +2306,22 @@ async function productsPage() {
   if (!app) return;
 
 
+  if (
+    !currentProfile ||
+    currentProfile.role !== "owner"
+  ) {
+
+    app.innerHTML = `
+      <div class="card">
+        Access denied.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
   const {
     data,
     error
@@ -2351,13 +2339,27 @@ async function productsPage() {
 
   if (error) {
 
-    app.innerHTML = `
-      <div class="card">
-        Error loading products.
-      </div>
-    `;
+    console.error(
+      "Products error:",
+      error
+    );
 
-    console.error(error);
+
+    app.innerHTML = `
+
+      <div class="card">
+
+        Error loading products.
+
+        <br><br>
+
+        ${escapeHTML(
+          error.message
+        )}
+
+      </div>
+
+    `;
 
     return;
 
@@ -2382,7 +2384,11 @@ async function productsPage() {
             <tr>
 
               <th>
-                Name
+                Sinhala
+              </th>
+
+              <th>
+                English
               </th>
 
               <th>
@@ -2410,6 +2416,12 @@ async function productsPage() {
                       <td>
                         ${escapeHTML(
                           product.name_si ||
+                          "-"
+                        )}
+                      </td>
+
+                      <td>
+                        ${escapeHTML(
                           product.name_en ||
                           "-"
                         )}
@@ -2481,13 +2493,24 @@ async function stockPage() {
 
   if (error) {
 
-    app.innerHTML = `
-      <div class="card">
-        Error loading stock.
-      </div>
-    `;
-
     console.error(error);
+
+
+    app.innerHTML = `
+
+      <div class="card">
+
+        Error loading stock.
+
+        <br><br>
+
+        ${escapeHTML(
+          error.message
+        )}
+
+      </div>
+
+    `;
 
     return;
 
@@ -2618,13 +2641,24 @@ async function expensesPage() {
 
   if (error) {
 
-    app.innerHTML = `
-      <div class="card">
-        Error loading expenses.
-      </div>
-    `;
-
     console.error(error);
+
+
+    app.innerHTML = `
+
+      <div class="card">
+
+        Error loading expenses.
+
+        <br><br>
+
+        ${escapeHTML(
+          error.message
+        )}
+
+      </div>
+
+    `;
 
     return;
 
@@ -2750,10 +2784,21 @@ async function reportsPage() {
 
     console.error(error);
 
+
     app.innerHTML = `
+
       <div class="card">
+
         Error loading reports.
+
+        <br><br>
+
+        ${escapeHTML(
+          error.message
+        )}
+
       </div>
+
     `;
 
     return;
@@ -2767,7 +2812,10 @@ async function reportsPage() {
 
   const total =
     sales.reduce(
-      (sum, sale) =>
+      (
+        sum,
+        sale
+      ) =>
         sum +
         Number(
           sale.total || 0
@@ -2908,9 +2956,11 @@ async function employeesPage() {
   ) {
 
     app.innerHTML = `
+
       <div class="card">
         Access denied.
       </div>
+
     `;
 
     return;
@@ -2939,10 +2989,21 @@ async function employeesPage() {
 
     console.error(error);
 
+
     app.innerHTML = `
+
       <div class="card">
+
         Error loading employees.
+
+        <br><br>
+
+        ${escapeHTML(
+          error.message
+        )}
+
       </div>
+
     `;
 
     return;
@@ -3056,7 +3117,10 @@ async function settingsPage() {
 
 
       <p>
-        ${t("language")}
+        ${language === "si"
+          ? "භාෂාව"
+          : "Language"
+        }
       </p>
 
 
@@ -3098,7 +3162,16 @@ async function settingsPage() {
 // FORGOT PASSWORD
 // ============================================================
 
-async function forgotPassword() {
+async function forgotPassword(event) {
+
+  if (event) {
+
+    event.preventDefault();
+
+    event.stopPropagation();
+
+  }
+
 
   const usernameInput =
     document.getElementById(
@@ -3123,9 +3196,7 @@ async function forgotPassword() {
     if (message) {
 
       message.textContent =
-        language === "en"
-          ? "Enter your username first."
-          : "මුලින් Username එක ඇතුළත් කරන්න.";
+        "මුලින් Username එක ඇතුළත් කරන්න.";
 
     }
 
@@ -3137,7 +3208,7 @@ async function forgotPassword() {
   try {
 
     const {
-      data,
+      data: email,
       error
     } =
       await supabase.rpc(
@@ -3156,22 +3227,17 @@ async function forgotPassword() {
     }
 
 
-    const email =
-      data;
-
-
     if (!email) {
 
       throw new Error(
-        "Username not found"
+        "Username not found."
       );
 
     }
 
 
     const {
-      error:
-        resetError
+      error: resetError
     } =
       await supabase.auth
         .resetPasswordForEmail(
@@ -3191,9 +3257,7 @@ async function forgotPassword() {
 
 
     alert(
-      language === "en"
-        ? "Password reset email sent."
-        : "Password reset email එක යැව්වා."
+      "Password reset email එක යැව්වා."
     );
 
 
@@ -3208,9 +3272,8 @@ async function forgotPassword() {
     if (message) {
 
       message.textContent =
-        language === "en"
-          ? "Password reset failed."
-          : "Password reset කරන්න බැරි වුණා.";
+        "Password reset කරන්න බැරි වුණා: " +
+        error.message;
 
     }
 
@@ -3225,36 +3288,54 @@ async function forgotPassword() {
 
 async function checkSession() {
 
-  const {
-    data
-  } =
-    await supabase.auth.getSession();
-
-
-  const session =
-    data.session;
-
-
-  if (!session) {
-
-    currentUser = null;
-
-    currentProfile = null;
-
-    showLogin();
-
-    return;
-
-  }
-
-
-  currentUser =
-    session.user;
-
-
   try {
 
+    const {
+      data,
+      error
+    } =
+      await supabase.auth.getSession();
+
+
+    if (error) {
+
+      throw error;
+
+    }
+
+
+    const session =
+      data.session;
+
+
+    if (!session) {
+
+      currentUser = null;
+
+      currentProfile = null;
+
+      showLogin();
+
+      return;
+
+    }
+
+
+    currentUser =
+      session.user;
+
+
     await loadProfile();
+
+
+    if (!currentProfile) {
+
+      throw new Error(
+        "Profile not found."
+      );
+
+    }
+
 
     showApp();
 
@@ -3263,22 +3344,30 @@ async function checkSession() {
     updateHeader();
 
 
-    await show(
-      currentProfile &&
-      currentProfile.role === "employee"
-        ? "pos"
-        : "dashboard"
-    );
+    if (
+      currentProfile.role ===
+      "employee"
+    ) {
+
+      await show("pos");
+
+    } else {
+
+      await show("dashboard");
+
+    }
 
 
   } catch (error) {
 
     console.error(
-      "Session profile error:",
+      "SESSION ERROR:",
       error
     );
 
+
     await supabase.auth.signOut();
+
 
     currentUser = null;
 
@@ -3296,10 +3385,16 @@ async function checkSession() {
 // ============================================================
 
 supabase.auth.onAuthStateChange(
-  async (
+  (
     event,
     session
   ) => {
+
+    console.log(
+      "AUTH EVENT:",
+      event
+    );
+
 
     if (
       event === "SIGNED_OUT"
@@ -3331,33 +3426,28 @@ supabase.auth.onAuthStateChange(
 
 
 // ============================================================
-// LOGIN ENTER KEY
+// LOGIN FORM SUBMIT
 // ============================================================
 
 document.addEventListener(
-  "keydown",
+  "submit",
   event => {
 
+    const form =
+      event.target;
+
+
     if (
-      event.key === "Enter"
+      form &&
+      (
+        form.closest("#loginScreen") ||
+        form.id === "loginForm"
+      )
     ) {
 
-      const loginScreen =
-        document.getElementById(
-          "loginScreen"
-        );
+      event.preventDefault();
 
-
-      if (
-        loginScreen &&
-        !loginScreen.classList.contains(
-          "app-hidden"
-        )
-      ) {
-
-        loginUser();
-
-      }
+      loginUser(event);
 
     }
 
@@ -3366,7 +3456,96 @@ document.addEventListener(
 
 
 // ============================================================
-// NAVIGATION BUTTONS
+// LOGIN BUTTON
+// ============================================================
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const loginButton =
+      event.target.closest(
+        "#loginButton"
+      );
+
+
+    if (loginButton) {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+      loginUser(event);
+
+      return;
+
+    }
+
+
+    const forgotButton =
+      event.target.closest(
+        "#forgotPasswordButton"
+      );
+
+
+    if (forgotButton) {
+
+      event.preventDefault();
+
+      event.stopPropagation();
+
+      forgotPassword(event);
+
+      return;
+
+    }
+
+  }
+);
+
+
+// ============================================================
+// LOGIN ENTER KEY
+// ============================================================
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if (
+      event.key !== "Enter"
+    ) {
+
+      return;
+
+    }
+
+
+    const loginScreen =
+      document.getElementById(
+        "loginScreen"
+      );
+
+
+    if (
+      loginScreen &&
+      !loginScreen.classList.contains(
+        "app-hidden"
+      )
+    ) {
+
+      event.preventDefault();
+
+      loginUser(event);
+
+    }
+
+  }
+);
+
+
+// ============================================================
+// NAVIGATION
 // ============================================================
 
 document.addEventListener(
@@ -3380,6 +3559,9 @@ document.addEventListener(
 
 
     if (!button) return;
+
+
+    event.preventDefault();
 
 
     const page =
@@ -3397,6 +3579,31 @@ document.addEventListener(
 
 
 // ============================================================
+// LOGOUT BUTTON
+// ============================================================
+
+document.addEventListener(
+  "click",
+  event => {
+
+    const button =
+      event.target.closest(
+        "#logoutButton"
+      );
+
+
+    if (!button) return;
+
+
+    event.preventDefault();
+
+    logoutUser(event);
+
+  }
+);
+
+
+// ============================================================
 // DOM READY
 // ============================================================
 
@@ -3404,58 +3611,11 @@ document.addEventListener(
   "DOMContentLoaded",
   async () => {
 
-    // Login button
-    const loginButton =
-      document.getElementById(
-        "loginButton"
-      );
+    console.log(
+      "අඹ සිසිල app loaded."
+    );
 
 
-    if (loginButton) {
-
-      loginButton.addEventListener(
-        "click",
-        loginUser
-      );
-
-    }
-
-
-    // Logout button
-    const logoutButton =
-      document.getElementById(
-        "logoutButton"
-      );
-
-
-    if (logoutButton) {
-
-      logoutButton.addEventListener(
-        "click",
-        logoutUser
-      );
-
-    }
-
-
-    // Forgot password
-    const forgotButton =
-      document.getElementById(
-        "forgotPasswordButton"
-      );
-
-
-    if (forgotButton) {
-
-      forgotButton.addEventListener(
-        "click",
-        forgotPassword
-      );
-
-    }
-
-
-    // Check existing session
     await checkSession();
 
   }
@@ -3507,6 +3667,3 @@ window.clearPOSCart =
 
 window.completePOSSale =
   completePOSSale;
-
-
-
