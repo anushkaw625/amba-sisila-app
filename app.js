@@ -1,3 +1,4 @@
+alert("අඹ සිසිල app.js loaded!");
 // ============================================================
 // අඹ සිසිල Management System
 // Supabase Authentication + Role Based Access + POS
