@@ -18,7 +18,7 @@ const SUPABASE_URL =
 // Service Role / Secret Key එක දාන්න එපා.
 
 const SUPABASE_PUBLISHABLE_KEY =
-  "YOUR_EXISTING_PUBLISHABLE_KEY";
+  "sb_publishable_pxnXrMQ7wDKH5bvizimAKw_ELu-HO-t";
 
 
 const supabase =
