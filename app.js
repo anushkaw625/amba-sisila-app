@@ -363,21 +363,58 @@ async function loginUser() {
   if (message) {
 
     message.textContent =
-      language === "en"
-        ? "Logging in..."
-        : "Login වෙමින්...";
+// ============================================================
+// LOGIN
+// ============================================================
 
+async function loginUser() {
+
+  const usernameInput =
+    document.getElementById("loginUsername");
+
+  const passwordInput =
+    document.getElementById("loginPassword");
+
+  const message =
+    document.getElementById("loginMessage");
+
+
+  const username =
+    usernameInput
+      ? usernameInput.value.trim()
+      : "";
+
+  const password =
+    passwordInput
+      ? passwordInput.value
+      : "";
+
+
+  if (!username || !password) {
+
+    if (message) {
+      message.textContent =
+        "Username සහ Password ඇතුළත් කරන්න.";
+    }
+
+    return;
+  }
+
+
+  if (message) {
+    message.textContent =
+      "Login වෙමින්...";
   }
 
 
   try {
 
     // --------------------------------------------------------
-    // Username → email
+    // STEP 1 - Username → Email
     // --------------------------------------------------------
 
     const {
-      data: emailData,
+      data: email,
       error: emailError
     } =
       await supabase.rpc(
@@ -388,6 +425,17 @@ async function loginUser() {
       );
 
 
+    console.log(
+      "Username:",
+      username
+    );
+
+    console.log(
+      "Email from RPC:",
+      email
+    );
+
+
     if (emailError) {
 
       console.error(
@@ -395,30 +443,30 @@ async function loginUser() {
         emailError
       );
 
-      throw emailError;
+      throw new Error(
+        "Username lookup failed: " +
+        emailError.message
+      );
 
     }
-
-
-    const email = emailData;
 
 
     if (!email) {
 
       throw new Error(
-        "Invalid username"
+        "Username not found."
       );
 
     }
 
 
     // --------------------------------------------------------
-    // Supabase Auth
+    // STEP 2 - Supabase Login
     // --------------------------------------------------------
 
     const {
       data,
-      error
+      error: loginError
     } =
       await supabase.auth.signInWithPassword({
 
@@ -429,9 +477,31 @@ async function loginUser() {
       });
 
 
-    if (error) {
+    console.log(
+      "Login response:",
+      data
+    );
 
-      throw error;
+
+    if (loginError) {
+
+      console.error(
+        "Supabase login error:",
+        loginError
+      );
+
+      throw new Error(
+        loginError.message
+      );
+
+    }
+
+
+    if (!data || !data.user) {
+
+      throw new Error(
+        "Login successful, but user data was not returned."
+      );
 
     }
 
@@ -440,7 +510,31 @@ async function loginUser() {
       data.user;
 
 
+    // --------------------------------------------------------
+    // STEP 3 - Load Profile
+    // --------------------------------------------------------
+
     await loadProfile();
+
+
+    console.log(
+      "Current profile:",
+      currentProfile
+    );
+
+
+    if (!currentProfile) {
+
+      throw new Error(
+        "Login successful, but profile was not found."
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // STEP 4 - Open App
+    // --------------------------------------------------------
 
     showApp();
 
@@ -448,18 +542,31 @@ async function loginUser() {
 
     updateHeader();
 
-    await show(
-      currentProfile &&
+
+    const firstPage =
       currentProfile.role === "employee"
         ? "pos"
-        : "dashboard"
-    );
+        : "dashboard";
+
+
+    await show(firstPage);
+
+
+    // Clear password field
+    if (passwordInput) {
+      passwordInput.value = "";
+    }
+
+
+    if (message) {
+      message.textContent = "";
+    }
 
 
   } catch (error) {
 
     console.error(
-      "Login error:",
+      "LOGIN ERROR:",
       error
     );
 
@@ -467,7 +574,11 @@ async function loginUser() {
     if (message) {
 
       message.textContent =
-        t("loginError");
+        "Login failed: " +
+        (
+          error.message ||
+          "Unknown error"
+        );
 
     }
 
