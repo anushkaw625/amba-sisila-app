@@ -1,4 +1,12 @@
 alert("අඹ සිසිල app.js loaded!");
+window.onerror = function (message, source, lineno, colno) {
+  alert(
+    "JavaScript Error:\n" +
+    message +
+    "\nLine: " +
+    lineno
+  );
+};
 // ============================================================
 // අඹ සිසිල Management System
 // Supabase Authentication + Role Based Access + POS
