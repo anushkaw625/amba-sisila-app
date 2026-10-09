@@ -292,10 +292,19 @@
        APPLICATION JAVASCRIPT
        ====================================================== -->
 
-  <script>
+  <<script>
   alert("HTML JavaScript is working!");
-</script><script src="./app.js?v=12345"></script>
 
+  var testScript = document.createElement("script");
+  testScript.src = "./app.js?v=12345";
+  testScript.onload = function () {
+    alert("app.js loaded successfully!");
+  };
+  testScript.onerror = function () {
+    alert("app.js failed to load!");
+  };
+  document.body.appendChild(testScript);
+</script>
 
 </body>
 
